@@ -108,6 +108,7 @@ class ScoreLifeProgramming:
         l_3 = (i+1)/(2**j)
         a_ij = S(l_1,X, gamma,N,env) - 0.5*(S(l_2,X, gamma,N,env)+ S(l_3,X,gamma,N,env))
         return a_ij
+    
     def compute_faber_schauder_coefficients(X,gamma,N,j_max,env):
         a_0 = S(0,X,gamma,N,env)
         print(a_0)

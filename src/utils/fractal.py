@@ -1,6 +1,8 @@
 """
+
 Class containing definition of a Fractal function 
 and methods to compute optima of Fractal functions
+
 """
 import random
 
@@ -59,11 +61,32 @@ class Fractal:
                 i = i + 1
             j = j + 1
         return grad_f
+    
+    def S_i_j(l,i,j):
+        val = (2**j)*(abs(l-(i/(2**j))) + abs(l-((i+1)/(2**j))) - abs(2*l-((2*i+1)/(2**(j)))))
+        return val
+
+    def compute_fractal(self,l):
+
+        f = self.alpha_0 + self.alpha_1*l
+        j_max = len(self.coefficients)
+        j = 0
+
+        while j < j_max:
+            i = 0
+            while i <= 2**j - 1:
+                f = f + self.S_i_j(l,i,j)*self.coefficients[j][i]
+                i = i + 1
+            j = j + 1
+
+        return f
+
+
 
     def compute_optima_gradient_descent(self):
 
         """ 
-        
+
         Compute Optima of fractal function using Algorithm described in the Bdp paper
         
         """

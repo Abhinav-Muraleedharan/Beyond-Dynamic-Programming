@@ -32,6 +32,7 @@ class Monte_Carlo:
     def reset(self):
         self.R_array = np.empty(1)
         self.l_array = np.empty(1)
+
     def run_monte_carlo(self,desired_state,max_iterations):
         iterations = 0
         self.env.reset()
@@ -103,24 +104,10 @@ if __name__ == "main":
     while i < N:
         for a in range(action_size):
 #           state, reward, terminated, truncated, info = env2.step(a)
-            experiment = monte_carlo(action_size, gamma,episode_length,state,env,env_name) #initialize class
+            experiment = Monte_Carlo(action_size, gamma,episode_length,state,env,env_name) #initialize class
             experiment.run_monte_carlo(state,max_iterations) #run monte carlo simulations
             experiment.plot(state) #plot results
             state, reward, terminated, truncated, info = env2.step(a)
             print(state)
 #        experiment.reset()
         i = i + 1
-
-######random score life functions
-#
-#lower_bound = -10
-#upper_bound =  10
-#i = 0
-#N = 0
-#while i < N:
-#    random_state = np.random.uniform(lower_bound, upper_bound, size=4)
-#    experiment = monte_carlo(action_size, gamma,episode_length,random_state,env,env_name) #initialize class
-#    experiment.run_monte_carlo(random_state,max_iterations) #run monte carlo simulations
-#    experiment.plot(random_state) #plot results
-#    experiment.reset()
-#    i = i + 1

@@ -8,6 +8,7 @@ import random
 import scipy
 from scipy.stats import gaussian_kde
 import matplotlib as mpl
+from fractal import Fractal
 
 class ScoreLifeProgramming:
 
@@ -63,11 +64,13 @@ class ScoreLifeProgramming:
         pass
 
     def custom_reward(state,action):
+
         n = len(state)
         q = np.ones(n)
         q = np.array([2,1,8,1])
         Q = np.diag(q)
         reward = state@Q@state.T
+        
         return reward
     
 

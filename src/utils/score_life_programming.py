@@ -19,9 +19,12 @@ class ScoreLifeProgramming:
         :param gamma: Discount factor for future rewards.
         :param coeff: Coefficients of Faber Schauder Expansion
         :param 
+
         """
         self.env = env
         self.gamma = gamma
+
+
 
     def _action_sequence_to_real(self, action_sequence) -> float:
         """
@@ -102,7 +105,7 @@ class ScoreLifeProgramming:
                 binary += '0'
         return binary
 
-    def compute_a_ij(i,j,X,gamma,N,env):
+    def _compute_a_ij(i,j,X,gamma,N,env):
         l_1 = (2*i + 1)/(2**(j+1))
         l_2 = i/(2**j)
         l_3 = (i+1)/(2**j)
@@ -292,6 +295,7 @@ x_array =[]
 x_dot_array = []
 theta_array = []
 theta_dot_array = []
+
 for i in range(1000):
     #compute faber schauder coefficients:
     if k == 0:

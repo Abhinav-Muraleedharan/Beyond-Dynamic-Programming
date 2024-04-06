@@ -8,7 +8,7 @@ import random
 import scipy
 from scipy.stats import gaussian_kde
 import matplotlib as mpl
-from fractal import Fractal
+from src.utils.fractal import Fractal
 
 class ScoreLifeProgramming:
 
@@ -19,7 +19,7 @@ class ScoreLifeProgramming:
         :param model: An instance of a dynamics model (e.g., CartPoleModel).
         :param gamma: Discount factor for future rewards.
         :param coeff: Coefficients of Faber Schauder Expansion
-        :param 
+        
 
         """
         self.env = env
@@ -28,12 +28,14 @@ class ScoreLifeProgramming:
 
 
     def _action_sequence_to_real(self, action_sequence) -> float:
+
         """
         Maps an action sequence to a real number in the interval [0, 1).
 
         :param action_sequence: A sequence of actions.
         :return: A real number representing the action sequence.
         """
+
         pass
 
     def _real_to_action_sequence(self, real_number):
@@ -70,7 +72,7 @@ class ScoreLifeProgramming:
         q = np.array([2,1,8,1])
         Q = np.diag(q)
         reward = state@Q@state.T
-        
+
         return reward
     
 
@@ -230,16 +232,7 @@ a_1 = S(1,X,gamma,N,env) - S(0,X,gamma,N,env)
 #print(a_1)
 
 j_max = 10
-#a_0,a_1,coefficients = compute_faber_schauder_coefficients(X,gamma,N,j_max,env)
-#print(a_0)
-#print(a_1)
-#print(coefficients[0])
-#print(coefficients[1])
 
-
- 
-#S_l = compute_score_life_function(a_0,a_1,coefficients,0.3333333)
-#print(S_l)
 ####plot faber schauder function
 a_0,a_1,coefficients = compute_faber_schauder_coefficients(X,gamma,N,j_max,env)
 # Generate data for x and y values

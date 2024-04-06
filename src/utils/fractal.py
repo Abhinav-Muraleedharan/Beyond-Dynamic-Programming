@@ -35,7 +35,7 @@ class Fractal:
             derivative = a*(abs(a*x - b)/(a*x - b))
         return derivative
     
-    def _d_S_i_j(self,l,i,j):
+    def _d_e_i_j(self,l,i,j):
         """
 
         Function to estimate derivative of the term e_ij in the Faber Schauder Expansion
@@ -57,12 +57,12 @@ class Fractal:
         while j < j_max:
             i = 0
             while i <=2**j - 1:
-                grad_f = grad_f + self._d_S_i_j(l,i,j)*self.coefficients[j][i]
+                grad_f = grad_f + self._d_e_i_j(l,i,j)*self.coefficients[j][i]
                 i = i + 1
             j = j + 1
         return grad_f
     
-    def S_i_j(l,i,j):
+    def _e_i_j(l,i,j):
         val = (2**j)*(abs(l-(i/(2**j))) + abs(l-((i+1)/(2**j))) - abs(2*l-((2*i+1)/(2**(j)))))
         return val
 
@@ -75,7 +75,7 @@ class Fractal:
         while j < j_max:
             i = 0
             while i <= 2**j - 1:
-                f = f + self.S_i_j(l,i,j)*self.coefficients[j][i]
+                f = f + self._e_i_j(l,i,j)*self.coefficients[j][i]
                 i = i + 1
             j = j + 1
 
@@ -87,7 +87,7 @@ class Fractal:
 
         """ 
 
-        Compute Optima of fractal function using Algorithm described in the Bdp paper
+        Compute Optima of fractal function using Algorithm 3 in the Bdp Paper
         
         """
         max_iter = 100
@@ -102,6 +102,7 @@ class Fractal:
             if i == 0:
                 # random initialization 
                 l = random.random()
+
             grad = self._grad_fractal(self,l)
             l = l - grad*lr
             lr = lr*(2**(-i))
@@ -127,4 +128,7 @@ class Fractal:
             i = i +1
 
         return l 
+    
+
+    
 

@@ -18,7 +18,57 @@ def custom_reward(state,action):
     return reward
 
 class Monte_Carlo:
+
+    """
+    Implements a Monte Carlo simulation approach for evaluating the performance 
+    of different action sequences in a given environment. This class focuses on 
+    exploring the state-action space to approximate the score-life function, which 
+    represents the utility or value of different states or actions in the environment.
+    
+    The Monte Carlo method used here samples different action sequences to estimate
+    their expected rewards, allowing for the evaluation of the effectiveness of 
+    various strategies over the episode length specified.
+
+    Attributes:
+        state (numpy.ndarray): The current state of the environment.
+        gamma (float): Discount factor, which balances the importance of immediate 
+                       versus future rewards.
+        episode_length (int): The number of steps/actions to simulate in each episode.
+        score_life_function (list): Placeholder for storing the score-life function 
+                                    results. [Currently not used in the provided code]
+        env (gym.Env): An instance of a Gym environment where the simulation is run.
+        R_array (numpy.ndarray): An array to store the cumulative rewards for each 
+                                 sampled action sequence.
+        l_array (numpy.ndarray): An array to store the real-number representations 
+                                 of the action sequences sampled.
+        env_name (str): Name of the Gym environment being used for simulation.
+        action_size (int): The number of possible actions in the environment's action space.
+
+    Methods:
+        reset(): Resets the arrays used to store simulation results.
+        run_monte_carlo(desired_state, max_iterations): Runs the Monte Carlo simulation 
+                                                        for a specified number of iterations, 
+                                                        starting from the desired_state.
+        plot(iteration_no): Generates and saves a scatter plot of the simulation results, 
+                            plotting the real-number representations of action sequences 
+                            against their corresponding cumulative rewards.
+    
+    The Monte Carlo simulation generates a variety of action sequences, evaluates their 
+    outcomes in terms of cumulative rewards, and visualizes these results to aid in 
+    understanding the potential effectiveness of different strategies within the specified 
+    environment. This approach is useful in environments where calculating the exact 
+    value of states or actions is computationally infeasible, providing a method to 
+    approximate these values through sampling.
+    
+    Note:
+        The `custom_reward` function is defined outside of this class and is intended to 
+        calculate a custom reward based on the current state and the action taken. This 
+        function can be customized or replaced depending on the specific requirements of 
+        the environment or the goals of the simulation.
+     """
+
     def __init__(self,action_size,gamma,episode_length,state,env,env_name):
+        
         self.state = state
         self.gamma = gamma
         self.episode_length = episode_length

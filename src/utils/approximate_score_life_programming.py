@@ -241,77 +241,8 @@ def compute_Q(state,env,n,N,gamma):
     return Q
     
     
-#
-#env = gym.make("CartPole-v0")
-#N = 200
-#X = np.array([0,0,0,0])  #####state
-#gamma = 0.8
-#a_0 = S(0,X,gamma,N,env)
-#a_1 = S(1,X,gamma,N,env) - S(0,X,gamma,N,env)
-#j_max = 10
-#n = 100
-#a_0,a_1,coefficients = compute_faber_schauder_coefficients(X,gamma,N,j_max,env)
-#a_opt,b_opt,c_opt = evaluate_quadratic_score_life_function(X,n,N,gamma,env)
-#plt = plot_quadratic(a_opt,b_opt,c_opt)
-#
-## Generate data for x and y values
-#l = np.linspace(0, 1, 1000)
-#y = []
-#for val in l:
-#    y_val = compute_score_life_function(a_0,a_1,coefficients,val)
-#    y.append(y_val)
-#
-## Create a figure and axis object
-##fig, ax = plt.subplots()
-## Plot the data
-#plt.plot(l, y, color='blue', linewidth=0.5)
-
-
-# Set the title and axis labels
-#ax.set_title('Exact Representation of Score-life function')
-#ax.set_xlabel('l')
-#ax.set_ylabel('S(l,x)')
-
-# Set the x-axis limits
-#ax.set_xlim([0, 1])
-
-# Display the plot
-#plt.show()
 
 
 
 
-#plt.show()
-#coefficients_quad = [a_opt,b_opt,c_opt]
-#J = optimize_quadratic(coefficients_quad)
-#print("Cost to go: ")
-#print(J)
-##print(S_i_j(0,0,0))
-##plt.savefig("")
-#env_2 = gym.make("CartPole-v1", render_mode="human")
-#gamma = 0.8
-#N = 200
-#j_max = 10
-#observation, info = env_2.reset()
-#k = 0
-##N_action_horizon = 10
-#n = 200
-#### simulation::::
-#for i in range(1000):
-#    #compute faber schauder coefficients:
-##    action = env.action_space.sample()
-#    env.reset()
-#    Q = compute_Q(observation,env,n,N,gamma)
-#    print(Q)
-#    action = Q.index(min(Q))
-#    print("action:")
-#    print(action)
-#    observation, reward, terminated, truncated, info = env_2.step(action)
-#    print(observation)
-#    env_2.render()
-#    if terminated or truncated:
-#        print("terminating...Iterations:",i)
-#        break
-#        observation, info = env.reset()
-#env.close()
-#env_2.close()
+

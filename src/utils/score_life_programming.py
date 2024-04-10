@@ -13,13 +13,13 @@ from src.utils.fractal import Fractal
 class ScoreLifeProgramming:
 
     def __init__(self, env, gamma):
+
         """
         Initialize the Score-life programming algorithm.
 
         :param model: An instance of a dynamics model (e.g., CartPoleModel).
         :param gamma: Discount factor for future rewards.
         :param coeff: Coefficients of Faber Schauder Expansion
-        
 
         """
         self.env = env
@@ -38,14 +38,33 @@ class ScoreLifeProgramming:
 
         pass
 
-    def _real_to_action_sequence(self, real_number):
+    def _real_to_action_sequence(self, real_number,num_bits):
+
         """
         Maps a real number back to an action sequence.
 
         :param real_number: A real number in the interval [0, 1).
-        :return: The corresponding action sequence.
+        :return: String Representing Corresponding action sequence.
+
         """
-        pass
+        if real_number == 0:
+            return '.' + '0' * (num_bits - 1)
+        elif real_number == 1:
+            return  '.' + '1' * num_bits
+        else:
+            binary = ''
+            # Check if the fraction is less than 1
+        if real_number < 1:
+            binary += '.'
+        for i in range(num_bits):
+            real_number *= 2
+            if real_number >= 1:
+                binary += '1'
+                real_number -= 1
+            else:
+                binary += '0'
+        return binary
+
 
     def compute_life_value(self, state) -> int:
         """
@@ -67,6 +86,15 @@ class ScoreLifeProgramming:
 
     def custom_reward(state,action):
 
+        """
+        Custom Reward Function implementing LQR cost
+
+        :param n: state dimension
+        :param q: diagonal entries of Q Matrix
+        :return reward: computed reward/cost 
+        
+        """
+
         n = len(state)
         q = np.ones(n)
         q = np.array([2,1,8,1])
@@ -76,51 +104,32 @@ class ScoreLifeProgramming:
         return reward
     
 
-    def S(l,X,gamma,N,env):
-        env.reset()
+    def S(self,l,X,N):
+        self.env.reset()
         R = 0
-        action_sequence = fraction_to_binary(l,num_bits = N)
-        env.state = env.unwrapped.state = X
+        action_sequence =self._real_to_action_sequence(l,num_bits = N)
+        self.env.state = self.env.unwrapped.state = X
         for i in range(len(action_sequence)-1):
             action = int(action_sequence[i+1])
-            state, reward, terminated, truncated, info  = env.step(action)
-            reward = custom_reward(state,action)
-            R = (gamma**(i))*reward + R
-        env.close()
+            state, reward, terminated, truncated, info  = self.env.step(action)
+            #reward = custom_reward(state,action) optional to implement custom reward functions
+            R = (self.gamma**(i))*reward + R
+        self.env.close()
         return R
 
+       
 
-    def fraction_to_binary(fraction, num_bits=20):
-
-        if fraction == 0:
-            return '.' + '0' * (num_bits - 1)
-        elif fraction == 1:
-            return  '.' + '1' * num_bits
-        else:
-            binary = ''
-            # Check if the fraction is less than 1
-        if fraction < 1:
-            binary += '.'
-        for i in range(num_bits):
-            fraction *= 2
-            if fraction >= 1:
-                binary += '1'
-                fraction -= 1
-            else:
-                binary += '0'
-        return binary
-
-    def _compute_a_ij(i,j,X,gamma,N,env):
+    def _compute_a_ij(self,i,j,X,N):
         l_1 = (2*i + 1)/(2**(j+1))
         l_2 = i/(2**j)
         l_3 = (i+1)/(2**j)
-        a_ij = S(l_1,X, gamma,N,env) - 0.5*(S(l_2,X, gamma,N,env)+ S(l_3,X,gamma,N,env))
+        a_ij = self.S(l_1,X, self.gamma,N,self.env) - 0.5*(S(l_2,X, self.gamma,N,self.env)+ S(l_3,X,self.gamma,N,self.env))
         return a_ij
     
-    def compute_faber_schauder_coefficients(X,gamma,N,j_max,env):
-        a_0 = S(0,X,gamma,N,env)
+    def compute_faber_schauder_coefficients(self, X, N,j_max):
+        a_0 = self.S(0,X,self.gamma,N,self.env)
         print(a_0)
-        a_1 = S(1,X,gamma,N,env) - S(0,X,gamma,N,env)
+        a_1 = self.S(1,X,self.gamma,N,self.env) - self.S(0,X,self.gamma,N,self.env)
         print(a_1)
         ####compute a_i,j
         i = 0
@@ -130,14 +139,15 @@ class ScoreLifeProgramming:
             i = 0
             c_j = []
             while i <= 2**j - 1:
-                a_i_j = compute_a_ij(i,j,X,gamma,N,env)
+                a_i_j = self._compute_a_ij(i,j,X,N)
                 c_j.append(a_i_j)
                 i = i + 1
             coefficients.append(c_j)
             j = j + 1
-        return a_0,a_1, coefficients
-
-    def derivative_mod_x(a,b,x):
+        fractal_function = Fractal(a_0,a_1,coefficients)
+        return fractal_function
+    
+    def _derivative_mod_x(a,b,x):
         ##function to compute derivative of |ax - b|
         if x == b/a:
             derivative = -a
@@ -145,18 +155,18 @@ class ScoreLifeProgramming:
             derivative = a*(abs(a*x - b)/(a*x - b))
         return derivative
        
-    def d_S_i_j(l,i,j):
-        derivative = (2**j)*(derivative_mod_x(1,(i/(2**j)),l) + derivative_mod_x(1,((i+1)/(2**j)),l) - derivative_mod_x(2,((2*i+1)/(2**j)),l))
+    def d_S_i_j(self,l,i,j):
+        derivative = (2**j)*(self._derivative_mod_x(1,(i/(2**j)),l) + self._derivative_mod_x(1,((i+1)/(2**j)),l) - self._derivative_mod_x(2,((2*i+1)/(2**j)),l))
         return derivative
 
-    def grad_score_life_function(a_0,a_1,coefficients,l):
+    def grad_score_life_function(self, a_0,a_1,coefficients,l):
         grad_f = a_1
         j_max = len(coefficients)
         j = 0
         while j < j_max:
             i = 0
             while i <=2**j - 1:
-                grad_f = grad_f + d_S_i_j(l,i,j)*coefficients[j][i]
+                grad_f = grad_f + self.d_S_i_j(l,i,j)*coefficients[j][i]
                 i = i + 1
             j = j + 1
         return grad_f
@@ -165,61 +175,19 @@ class ScoreLifeProgramming:
         val = (2**j)*(abs(l-(i/(2**j))) + abs(l-((i+1)/(2**j))) - abs(2*l-((2*i+1)/(2**(j)))))
         return val
     
-    def compute_score_life_function(a_0,a_1,coefficients,l):
+    def compute_score_life_function(self,a_0,a_1,coefficients,l):
         f = a_0 + a_1*l
         j_max = len(coefficients)
         j = 0
         while j < j_max:
             i = 0
             while i <= 2**j - 1:
-                f = f + S_i_j(l,i,j)*coefficients[j][i]
+                f = f + self.S_i_j(l,i,j)*coefficients[j][i]
                 i = i + 1
             j = j + 1
         return f
     
-    def compute_optimal_l(a_0,a_1,coefficients):
-        ####optimize Score-life function:
-        max_iter = 6000
-        i = 0
-        lr = 0.01 # learning rate
-        l = 0.001 #initialize l
-        grad_prev = 0
-        l_array = []
-        grad_array = []
-        i_array = []
-        while i < max_iter:
-            if i == 0:
-                l = random.random()
-            grad = grad_score_life_function(a_0,a_1,coefficients,l)
-            l = l - grad*lr
-            lr = lr*(2**(-i))
-#        print(l)
-#        print("square of gradient:")
-            grad_sq = grad**2
-#        print(grad**2)
-            grad_array.append(grad_sq)
-            l_array.append(l)
-            i_array.append(i)
-            if grad*grad_prev < 0:
-#            print("grad square:")
-#            print(grad**2)
-                if grad**2 < 0.01:
-                    break
-            grad_prev = grad
-            if l < 0:
-                l = 0
-                break
-            if l > 1:
-                l = 0.9999999
-                break
-            i = i +1
-        print("Optimal l:!!")
-        print("iterations:",i)
-        print(l)
-        print("Optimal Cost:")
-        J_optimal = compute_score_life_function(a_0,a_1,coefficients,l)
-        print(J_optimal)
-        return l, J_optimal,i_array,l_array,grad_array
+    
     
 
 env = gym.make("CartPole-v0")

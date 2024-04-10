@@ -53,24 +53,7 @@ def custom_reward(state,action):
     reward = state@Q@state.T
     return reward
 
-#def fraction_to_binary(fraction, num_bits, M):
-#    if fraction == 0:
-#        return '.' + '0' * (num_bits - 1)
-#    elif fraction == 1:
-#        return  '.' + '1' * num_bits
-#    else:
-#        binary = ''
-#        # Check if the fraction is less than 1
-#        if fraction < 1:
-#            binary += '.'
-#        for i in range(num_bits):
-#            fraction *= M
-#            if fraction >= 1:
-#                binary += '1'
-#                fraction -= 1
-#            else:
-#                binary += '0'
-#        return binary
+
 def fraction_to_binary(l,num_bits,M):
     import math
     if l == 0:

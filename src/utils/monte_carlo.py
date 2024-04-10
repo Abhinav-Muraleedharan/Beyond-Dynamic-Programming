@@ -68,7 +68,7 @@ class Monte_Carlo:
      """
 
     def __init__(self,action_size,gamma,episode_length,state,env,env_name):
-        
+
         self.state = state
         self.gamma = gamma
         self.episode_length = episode_length
@@ -116,13 +116,9 @@ class Monte_Carlo:
         c = kernel(np.vstack([x, y]))
         plt.xlim(0,1)
         plt.scatter(x, y, s=1, c=c, cmap=mpl.cm.viridis, edgecolor='none')
-#        sns.scatterplot(x=self.l_array, y=self.R_array, color='purple')
-        # Add labels and title to the plot
         plt.xlabel('life Values')
         plt.ylabel('Score Values')
         plt.title(f'Score life function')
-        # Create a folder to save the image
-        # Save the plot as a high-quality jpg image
         plt.savefig(f'results_monte_carlo_simulation_2{self.env_name}/monte_carlo_{iteration_no}.jpg', dpi=300)
         plt.close()
         plt.clf()
@@ -138,26 +134,17 @@ if __name__ == "main":
     action_size = env.action_space.n
     episode_length = 500
     max_iterations = 500
-    #####
     i = 0
     N = 20
-    #state = np.array([-0.16889614, -0.9115705]) #initialize state
-    #
-    #experiment = monte_carlo(action_size, gamma,episode_length,state,env,env_name) #initialize class
-    #experiment.run_monte_carlo(state,max_iterations) #run monte carlo simulations
-    #experiment.plot(state) #plot results
-    #experiment.reset()
     initial_state = np.array([0.5, 0,0,0])
     state = initial_state
     env2.reset()
     env2.state = env2.unwrapped.state = initial_state
     while i < N:
         for a in range(action_size):
-#           state, reward, terminated, truncated, info = env2.step(a)
             experiment = Monte_Carlo(action_size, gamma,episode_length,state,env,env_name) #initialize class
             experiment.run_monte_carlo(state,max_iterations) #run monte carlo simulations
             experiment.plot(state) #plot results
             state, reward, terminated, truncated, info = env2.step(a)
             print(state)
-#        experiment.reset()
         i = i + 1

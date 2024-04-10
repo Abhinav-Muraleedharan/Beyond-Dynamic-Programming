@@ -1,7 +1,7 @@
 Beyond Dynamic Programming
 ==============================
 
-Code Associated with the paper Beyond Dynamic Programming
+Code Associated with the paper [Beyond Dynamic Programming](https://arxiv.org/abs/2306.15029)
 
 Project Organization
 ------------
@@ -32,16 +32,24 @@ Project Organization
     ├── src                <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── envs          <- RL Environments
+    │   │   └── acrobot
+    |   |   └── cart_pole
+    |   |   └── lunar_lander
+    |   |   └── mountain_car
+    |   |   └── simple_pendulum
     │   │
     │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
     │   │   ├── predict_model.py
     │   │   └── train_model.py
+    |   ├── utils         <- Scripts continaing Score-life programming methods
+    |   |   |
+    |   |   ├── approximate_score_life_programming.py   <- Approximate Method
+    |   |   ├── fractal.py                              <- Class definition of Fractal Functions
+    |   |   ├── monte_carlo.py                          <- Monte Carlo Evaluation Scripts
+    |   |   ├── score_life_programming.py               <- Exact Method
+
     │   │
     │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
     │       └── visualize.py

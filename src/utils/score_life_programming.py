@@ -169,6 +169,7 @@ class ScoreLifeProgramming:
         return fractal_function
     
     def _derivative_mod_x(a,b,x):
+
         """
         Function to compute derivate of |ax - b|. Used for computing derivatives of Score-life function
         :param x: Value x
@@ -185,6 +186,7 @@ class ScoreLifeProgramming:
         return derivative
        
     def d_S_i_j(self,l,i,j):
+        
         """
         Function to compute derivate of e_ij term (basis functions of Faber Schuder Expansion). 
         :param l: Life Value l

@@ -3,6 +3,9 @@ Beyond Dynamic Programming
 
 Code Associated with the paper [Beyond Dynamic Programming](https://arxiv.org/abs/2306.15029)
 
+![Local Image](./visualization/fractal_image_1.jpeg)
+
+
 Project Organization
 ------------
 

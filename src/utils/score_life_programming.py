@@ -12,31 +12,26 @@ from src.utils.fractal import Fractal
 
 class ScoreLifeProgramming:
 
-    def __init__(self, env, gamma):
+    def __init__(self, env, gamma, N,j_max):
 
         """
         Initialize the Score-life programming algorithm.
 
         :param model: An instance of a dynamics model (e.g., CartPoleModel).
         :param gamma: Discount factor for future rewards.
-        :param coeff: Coefficients of Faber Schauder Expansion
+        :ground_state: Initial State x_0 
+        :param N: Maximum number of timesteps taken in simulation to evaluate score-life function
+        :param j_max: max order of expansion of Faber Schauder Series
+        :param score_function_ground_state: Score-life function of ground state
 
         """
         self.env = env
         self.gamma = gamma
+        self.ground_state = self.env.state
+        self.N = N
+        self.j_max = j_max
+        self.score_function_ground_state = self._compute_faber_schauder_coefficients(self, self.ground_state, self.N,self.j_max)
 
-
-
-    def _action_sequence_to_real(self, action_sequence) -> float:
-
-        """
-        Maps an action sequence to a real number in the interval [0, 1).
-
-        :param action_sequence: A sequence of actions.
-        :return: A real number representing the action sequence.
-        """
-
-        pass
 
     def _real_to_action_sequence(self, real_number,num_bits):
 
@@ -66,23 +61,19 @@ class ScoreLifeProgramming:
         return binary
 
 
-    def compute_life_value(self, state) -> int:
+    def compute_score_function(self, state) -> Fractal:
         """
-        Computes the 'life value' for a given state.
+        Computes the Score-life function of input state and compute optimal action sequence
 
         :param state: The state for which to compute the life value.
-        :return: The computed life value.
-        """
-        pass
+        :return: The computed Fractal Function.
 
-    def optimize_score_life_function(self, initial_state):
         """
-        Optimizes the Score-life function to find the optimal action sequence.
+        score_life_function = self._compute_faber_schauder_coefficients(self, state, self.N,self.j_max)
+        l_optimal = score_life_function.compute_optima_gradient_descent()
 
-        :param initial_state: The state from which optimization starts.
-        :return: The optimal action sequence and its corresponding life value.
-        """
-        pass
+        return score_life_function,l_optimal
+
 
     def custom_reward(state,action):
 
@@ -104,10 +95,21 @@ class ScoreLifeProgramming:
         return reward
     
 
-    def S(self,l,X,N):
+    def S(self,l,X):
+        """
+
+        Evaluates Score function at a specific l-value for a given state X
+
+        :param l: life-value
+        :param X: State Vector
+        :return R: computed infinite horizon cost
+        
+        """
+
+
         self.env.reset()
         R = 0
-        action_sequence =self._real_to_action_sequence(l,num_bits = N)
+        action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
         self.env.state = self.env.unwrapped.state = X
         for i in range(len(action_sequence)-1):
             action = int(action_sequence[i+1])
@@ -119,18 +121,37 @@ class ScoreLifeProgramming:
 
        
 
-    def _compute_a_ij(self,i,j,X,N):
+    def _compute_a_ij(self,i,j,X):
+
+        """
+        Computes a specific Faber Schauder Coefficient of a given state indexed by i and j [Eq(23)]
+        :param i: index of coefficient
+        :param j: index of coefficient
+        :param X: input state
+
+        :return a_ij: computed coefficient
+        
+        """
+    
         l_1 = (2*i + 1)/(2**(j+1))
         l_2 = i/(2**j)
         l_3 = (i+1)/(2**j)
-        a_ij = self.S(l_1,X, self.gamma,N,self.env) - 0.5*(S(l_2,X, self.gamma,N,self.env)+ S(l_3,X,self.gamma,N,self.env))
+        a_ij = self.S(l_1,X, self.gamma,self.N,self.env) - 0.5*(self.S(l_2,X, self.gamma,self.N,self.env)+ self.S(l_3,X,self.gamma,self.N,self.env))
         return a_ij
     
-    def compute_faber_schauder_coefficients(self, X, N,j_max):
-        a_0 = self.S(0,X,self.gamma,N,self.env)
-        print(a_0)
-        a_1 = self.S(1,X,self.gamma,N,self.env) - self.S(0,X,self.gamma,N,self.env)
-        print(a_1)
+    def _compute_faber_schauder_coefficients(self, X,j_max):
+
+        """
+        Computes all Faber Schauder Coefficients of a given state X
+        :param X: State
+        :param j_max: Max value of the index
+        
+        :return fractal_function: fractal_function representing Score-life function of the given state X
+        
+        """
+
+        a_0 = self.S(0,X,self.gamma,self.N,self.env)
+        a_1 = self.S(1,X,self.gamma,self.N,self.env) - self.S(0,X,self.gamma,self.N,self.env)
         ####compute a_i,j
         i = 0
         j = 0
@@ -139,7 +160,7 @@ class ScoreLifeProgramming:
             i = 0
             c_j = []
             while i <= 2**j - 1:
-                a_i_j = self._compute_a_ij(i,j,X,N)
+                a_i_j = self._compute_a_ij(self,i,j,X)
                 c_j.append(a_i_j)
                 i = i + 1
             coefficients.append(c_j)
@@ -148,7 +169,15 @@ class ScoreLifeProgramming:
         return fractal_function
     
     def _derivative_mod_x(a,b,x):
-        ##function to compute derivative of |ax - b|
+        """
+        Function to compute derivate of |ax - b|. Used for computing derivatives of Score-life function
+        :param x: Value x
+        :param a: Value a
+        :param b: Value b
+
+        :return derivative: derivative of |ax - b| at x. 
+        
+        """
         if x == b/a:
             derivative = -a
         else:
@@ -156,6 +185,15 @@ class ScoreLifeProgramming:
         return derivative
        
     def d_S_i_j(self,l,i,j):
+        """
+        Function to compute derivate of e_ij term (basis functions of Faber Schuder Expansion). 
+        :param l: Life Value l
+        :param i: Index i
+        :param j: Index j
+        
+        :return derivative: derivative of e_ij(l) at l. 
+        
+        """
         derivative = (2**j)*(self._derivative_mod_x(1,(i/(2**j)),l) + self._derivative_mod_x(1,((i+1)/(2**j)),l) - self._derivative_mod_x(2,((2*i+1)/(2**j)),l))
         return derivative
 
@@ -187,117 +225,3 @@ class ScoreLifeProgramming:
             j = j + 1
         return f
     
-    
-    
-
-env = gym.make("CartPole-v0")
-N = 100
-X = np.array([0,0,0,0])
-gamma = 0.5
-a_0 = S(0,X,gamma,N,env)
-#print(a_0)
-a_1 = S(1,X,gamma,N,env) - S(0,X,gamma,N,env)
-#print(a_1)
-
-j_max = 10
-
-####plot faber schauder function
-a_0,a_1,coefficients = compute_faber_schauder_coefficients(X,gamma,N,j_max,env)
-# Generate data for x and y values
-l = np.linspace(0, 1, 1000)
-y = []
-for val in l:
-    y_val = compute_score_life_function(a_0,a_1,coefficients,val)
-    y.append(y_val)
-
-# Create a figure and axis object
-fig, ax = plt.subplots()
-
-# Plot the data
-ax.plot(l, y, color='blue', linewidth=0.5)
-
-# Set the title and axis labels
-ax.set_title('Exact Representation of Score-life function')
-ax.set_xlabel('l')
-ax.set_ylabel('S(l,x)')
-
-# Set the x-axis limits
-ax.set_xlim([0, 1])
-
-# Display the plot
-#plt.show()
-plt.savefig("Score_life_function")
-#print(S_i_j(0,0,0))
-
-l_optimal, J_optimal,i_array,l_array,grad_array = compute_optimal_l(a_0,a_1,coefficients)
-
-fig, ax = plt.subplots()
-
-# Plot the data
-ax.plot(i_array,grad_array, color='blue', linewidth=2)
-ax.plot(i_array,l_array, color='red', linewidth=2)
-
-# Set the title and axis labels
-ax.set_title('Fractal Optimization Convergence Plot')
-ax.set_xlabel('l')
-ax.set_ylabel('grad_squared')
-
-# Set the x-axis limits
-ax.set_xlim([0, 1])
-
-# Display the plot
-plt.show()
-#plt.savefig("")
-env_2 = gym.make("CartPole-v1", render_mode="human")
-gamma = 0.5
-N = 100
-j_max = 10
-observation, info = env_2.reset(seed=42)
-k = 0
-N_action_horizon = 10
-x_array =[]
-x_dot_array = []
-theta_array = []
-theta_dot_array = []
-
-for i in range(1000):
-    #compute faber schauder coefficients:
-    if k == 0:
-        a_0,a_1,coefficients = compute_faber_schauder_coefficients(observation,gamma,N,j_max,env)
-        l_optimal, J_optimal,i_array,l_array,grad_array = compute_optimal_l(a_0,a_1,coefficients)
-        action_sequence = fraction_to_binary(l_optimal,N_action_horizon)
-        print(action_sequence)
-    if k < N_action_horizon - 1:
-        action = int(action_sequence[k+1])
-        k = k + 1
-        print(k)
-    if k == N_action_horizon-1:
-        k = 0
-#    action = env.action_space.sample()
-    observation, reward, terminated, truncated, info = env_2.step(action)
-    print(observation)
-    x_array.append(observation[0])
-    x_dot_array.append(observation[1])
-    theta_array.append(observation[2])
-    theta_dot_array.append(observation[3])
-    env_2.render()
-    if terminated or truncated:
-        print("terminating...Iterations:",i)
-        break
-        observation, info = env.reset()
-
-fig, ax = plt.subplots()
-ax.plot(x_array, label=f'Trajectory - x')
-ax.plot(x_dot_array, label=f'Trajectory  - x_dot')
-ax.plot(theta_array, label=f'Trajectory - theta')
-ax.plot(theta_dot_array, label=f'Trajectory  - theta_dot')
-ax.set_title('Simulation Trajectories')
-ax.set_xlabel('Time')
-ax.set_ylabel('Values')
-# Show legend
-ax.legend()
-# Display the plot
-plt.savefig(f'Simulation_results_exact.jpg', dpi=300)
-plt.show()
-env.close()
-env_2.close()

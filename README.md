@@ -1,25 +1,10 @@
 # Beyond Dynamic Programming
 
-This project implements and compares various reinforcement learning algorithms, including the novel Score-life programming method introduced in the "Beyond Dynamic Programming" paper, alongside benchmarks from Stable Baselines 3.
-
-## Project Structure
-
-```
-beyond-dynamic-programming/
-├── README.md
-├── requirements.txt
-├── src/
-│   ├── score_life_programming/
-│   ├── benchmarks/
-│   ├── environments/
-│   └── utils/
-├── tests/
-├── experiments/
-├── results/
-└── run_experiments.sh
-```
+This project implements and compares various reinforcement learning algorithms, including the novel Score-life programming method introduced in the "Beyond Dynamic Programming" paper, alongside state-of-the-art methods from Stable Baselines 3.
 
 ## Setup
+
+### Using Conda (Recommended)
 
 1. Clone the repository:
    ```
@@ -27,7 +12,27 @@ beyond-dynamic-programming/
    cd beyond-dynamic-programming
    ```
 
-2. Create and activate a virtual environment (optional but recommended):
+2. Create the conda environment from the `environment.yml` file:
+   ```
+   conda env create -f environment.yml
+   ```
+
+3. Activate the conda environment:
+   ```
+   conda activate beyond-dp
+   ```
+
+### Alternative: Using pip
+
+If you prefer not to use conda, you can set up a virtual environment and install the dependencies using pip:
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/beyond-dynamic-programming.git
+   cd beyond-dynamic-programming
+   ```
+
+2. Create and activate a virtual environment:
    ```
    python -m venv venv
    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
@@ -40,18 +45,42 @@ beyond-dynamic-programming/
 
 ## Running Experiments
 
-To run all experiments, use the provided shell script:
+You can run experiments for all environments or a specific environment using the provided shell script.
+
+To run all experiments:
 
 ```
 chmod +x run_experiments.sh
 ./run_experiments.sh
 ```
 
-This script will run experiments for CartPole, Mountain Car, Acrobot, and Lunar Lander environments, comparing the novel Score-life programming methods with Stable Baselines 3 algorithms (A2C, PPO, DQN).
+To run experiments for a specific environment:
+
+```
+./run_experiments.sh <environment_name>
+```
+
+Replace `<environment_name>` with one of the following:
+
+- CartPole-v1
+- MountainCar-v0
+- Acrobot-v1
+- LunarLander-v2
+- GridWorld
+- Taxi-v3
+- FrozenLake-v1
+- Blackjack-v1
+- CliffWalking-v0
+
+For example:
+
+```
+./run_experiments.sh CartPole-v1
+```
 
 ## Results
 
-The results of the experiments will be saved in the `results/` directory. Each experiment will generate plots and data files comparing the performance of different methods.
+The results of the experiments will be saved in the `results/` directory. Each experiment will generate plots comparing the performance of different methods for each environment.
 
 ## Contributing
 

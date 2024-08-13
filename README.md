@@ -1,63 +1,62 @@
-Beyond Dynamic Programming
-==============================
+# Beyond Dynamic Programming
 
-Code Associated with the paper [Beyond Dynamic Programming](https://arxiv.org/abs/2306.15029)
+This project implements and compares various reinforcement learning algorithms, including the novel Score-life programming method introduced in the "Beyond Dynamic Programming" paper, alongside benchmarks from Stable Baselines 3.
 
-![Local Image](./src/visualization/fractal_image_1.jpeg)
+## Project Structure
 
+```
+beyond-dynamic-programming/
+├── README.md
+├── requirements.txt
+├── src/
+│   ├── score_life_programming/
+│   ├── benchmarks/
+│   ├── environments/
+│   └── utils/
+├── tests/
+├── experiments/
+├── results/
+└── run_experiments.sh
+```
 
-Project Organization
-------------
+## Setup
 
-    ├── LICENSE
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── envs          <- RL Environments
-    │   │   └── acrobot
-    |   |   └── cart_pole
-    |   |   └── lunar_lander
-    |   |   └── mountain_car
-    |   |   └── simple_pendulum
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    |   ├── utils         <- Scripts continaing Score-life programming methods
-    |   |   |
-    |   |   ├── approximate_score_life_programming.py   <- Approximate Method
-    |   |   ├── fractal.py                              <- Class definition of Fractal Functions
-    |   |   ├── monte_carlo.py                          <- Monte Carlo Evaluation Scripts
-    |   |   ├── score_life_programming.py               <- Exact Method
+1. Clone the repository:
+   ```
+   git clone https://github.com/your-username/beyond-dynamic-programming.git
+   cd beyond-dynamic-programming
+   ```
 
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
+2. Create and activate a virtual environment (optional but recommended):
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
 
+3. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
 
+## Running Experiments
 
+To run all experiments, use the provided shell script:
+
+```
+chmod +x run_experiments.sh
+./run_experiments.sh
+```
+
+This script will run experiments for CartPole, Mountain Car, Acrobot, and Lunar Lander environments, comparing the novel Score-life programming methods with Stable Baselines 3 algorithms (A2C, PPO, DQN).
+
+## Results
+
+The results of the experiments will be saved in the `results/` directory. Each experiment will generate plots and data files comparing the performance of different methods.
+
+## Contributing
+
+If you'd like to contribute to this project, please fork the repository and submit a pull request with your changes.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.

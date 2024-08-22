@@ -96,6 +96,8 @@ class ScoreLifeProgramming:
     
 
     def S(self,l,X):
+
+        
         """
 
         Evaluates Score function at a specific l-value for a given state X

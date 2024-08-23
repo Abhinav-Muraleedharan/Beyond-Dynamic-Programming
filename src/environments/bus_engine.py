@@ -9,6 +9,13 @@ class BusEngineEnvironment():
         self.q = q
         self.cost_fun = lambda x: -2*x
 
+
+    def reset(self):
+        self.state = 0
+
+    def set_state(self,X):
+        self.state = X
+
     def step(self, action):
         # new state - 
 

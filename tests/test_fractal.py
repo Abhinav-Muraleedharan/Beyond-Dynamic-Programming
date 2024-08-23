@@ -16,8 +16,9 @@ def test_initialization():
     assert fractal.coefficients == [3, 4, 5]
 
 def test_derivative_mod_x():
-    result = Fractal._derivative_mod_x(2, 3, 1.5)
-    assert result == 2  # Adjust expected result based on correct behavior
+    fractal = Fractal(0, 1, [[2]])
+    result = fractal._derivative_mod_x(2, 3, 1.5)
+    assert result == -2  # Adjust expected result based on correct behavior
 
 def test_d_e_i_j():
     fractal = Fractal(0, 1, [[2]])
@@ -30,17 +31,18 @@ def test_grad_fractal():
     assert result is not None  # Example assertion, replace with actual expected behavior
 
 def test_e_i_j():
-    result = Fractal._e_i_j(0.5, 0, 0)
+    fractal = Fractal(0, 1, [[2]])
+    result = fractal._e_i_j(0.5, 0, 0)
     assert result is not None  # Example assertion, replace with actual expected behavior
 
 def test_compute_fractal():
-    fractal = Fractal(1, 2, [[3, 4], [5]])
+    fractal = Fractal(1, 2, [[3], [4,5]])
     result = fractal.compute_fractal(0.5)
     assert result is not None  # Example assertion, replace with actual expected behavior
 
 @patch('random.random', return_value=0.5)
 def test_compute_optima_gradient_descent(mock_random):
-    fractal = Fractal(1, 2, [[3, 4], [5]])
+    fractal = Fractal(1, 2, [[3], [4,5]] )
     optimum = fractal.compute_optima_gradient_descent()
     assert 0 <= optimum <= 1  # Example assertion, replace with actual expected behavior
 

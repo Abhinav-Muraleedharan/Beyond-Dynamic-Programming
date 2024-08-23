@@ -5,6 +5,8 @@ and methods to compute optima of Fractal functions
 
 """
 import random
+import numpy as np
+import matplotlib.pyplot as plt 
 
 class Fractal:
 
@@ -22,7 +24,7 @@ class Fractal:
         self.alpha_1 = alpha_1
         self.coefficients = coefficients 
 
-    def _derivative_mod_x(a,b,x):
+    def _derivative_mod_x(self,a,b,x):
 
         """
         
@@ -62,7 +64,7 @@ class Fractal:
             j = j + 1
         return grad_f
     
-    def _e_i_j(l,i,j):
+    def _e_i_j(self,l,i,j):
         val = (2**j)*(abs(l-(i/(2**j))) + abs(l-((i+1)/(2**j))) - abs(2*l-((2*i+1)/(2**(j)))))
         return val
 
@@ -80,6 +82,23 @@ class Fractal:
             j = j + 1
 
         return f
+
+    def visualize_fractal(self):
+        
+        l_values = np.linspace(0, 1, 1000)
+        S_values = np.array([self.compute_fractal(l) for l in l_values])
+        plt.figure(figsize=(12, 8))
+        plt.plot(l_values, S_values, 'b-', linewidth=2)
+        plt.title('Score-life Function', fontsize=20)
+        plt.xlabel('l', fontsize=16)
+        plt.ylabel('S(l)', fontsize=16)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.tick_params(axis='both', which='major', labelsize=12)
+        plt.tight_layout()
+        plt.savefig('score_life_function.png', dpi=300, bbox_inches='tight')
+        print("Plot saved as 'score_life_function.png'")
+
+
 
 
 
@@ -103,7 +122,7 @@ class Fractal:
                 # random initialization 
                 l = random.random()
 
-            grad = self._grad_fractal(self,l)
+            grad = self._grad_fractal(l)
             l = l - grad*lr
             lr = lr*(2**(-i))
             grad_sq = grad**2

@@ -12,7 +12,7 @@ from src.utils.fractal import Fractal
 
 class ScoreLifeProgramming:
 
-    def __init__(self, env, gamma, N,j_max):
+    def __init__(self, env, gamma, N,j_max, num_samples, reference_state):
 
         """
         Initialize the Score-life programming algorithm.
@@ -27,10 +27,11 @@ class ScoreLifeProgramming:
         """
         self.env = env
         self.gamma = gamma
-        self.ground_state = self.env.state
+        self.reference_state = reference_state
         self.N = N
         self.j_max = j_max
-        self.score_function_ground_state = self._compute_faber_schauder_coefficients(self, self.ground_state, self.N,self.j_max)
+        self.num_samples = num_samples
+        self.score_function_reference_state = self._compute_faber_schauder_coefficients()
 
 
     def _real_to_action_sequence(self, real_number,num_bits):
@@ -97,7 +98,7 @@ class ScoreLifeProgramming:
 
     def S(self,l,X):
 
-        
+
         """
 
         Evaluates Score function at a specific l-value for a given state X
@@ -108,17 +109,21 @@ class ScoreLifeProgramming:
         
         """
 
-
         self.env.reset()
         R = 0
         action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
-        self.env.state = self.env.unwrapped.state = X
-        for i in range(len(action_sequence)-1):
-            action = int(action_sequence[i+1])
-            state, reward, terminated, truncated, info  = self.env.step(action)
-            #reward = custom_reward(state,action) optional to implement custom reward functions
-            R = (self.gamma**(i))*reward + R
-        self.env.close()
+        self.env.set_state(X)
+        avg_R = 0
+
+        for j in range(self.num_samples):
+            for i in range(len(action_sequence)-1):
+                action = int(action_sequence[i+1])
+                state, reward  = self.env.step(action)
+                #reward = custom_reward(state,action) optional to implement custom reward functions
+                R = (self.gamma**(i))*reward + R
+        avg_R = avg_R + R
+        avg_R = avg_R/self.num_samples
+        
         return R
 
        
@@ -138,10 +143,10 @@ class ScoreLifeProgramming:
         l_1 = (2*i + 1)/(2**(j+1))
         l_2 = i/(2**j)
         l_3 = (i+1)/(2**j)
-        a_ij = self.S(l_1,X, self.gamma,self.N,self.env) - 0.5*(self.S(l_2,X, self.gamma,self.N,self.env)+ self.S(l_3,X,self.gamma,self.N,self.env))
+        a_ij = self.S(l_1,X) - 0.5*(self.S(l_2,X)+ self.S(l_3,X))
         return a_ij
     
-    def _compute_faber_schauder_coefficients(self, X,j_max):
+    def _compute_faber_schauder_coefficients(self):
 
         """
         Computes all Faber Schauder Coefficients of a given state X
@@ -151,9 +156,10 @@ class ScoreLifeProgramming:
         :return fractal_function: fractal_function representing Score-life function of the given state X
         
         """
-
-        a_0 = self.S(0,X,self.gamma,self.N,self.env)
-        a_1 = self.S(1,X,self.gamma,self.N,self.env) - self.S(0,X,self.gamma,self.N,self.env)
+        X = self.reference_state
+        j_max = self.j_max 
+        a_0 = self.S(0,X)
+        a_1 = self.S(1,X,) - self.S(0,X)
         ####compute a_i,j
         i = 0
         j = 0
@@ -162,7 +168,7 @@ class ScoreLifeProgramming:
             i = 0
             c_j = []
             while i <= 2**j - 1:
-                a_i_j = self._compute_a_ij(self,i,j,X)
+                a_i_j = self._compute_a_ij(i,j,X)
                 c_j.append(a_i_j)
                 i = i + 1
             coefficients.append(c_j)
@@ -229,3 +235,4 @@ class ScoreLifeProgramming:
             j = j + 1
         return f
     
+

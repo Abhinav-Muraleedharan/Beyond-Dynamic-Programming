@@ -15,3 +15,6 @@ s = ScoreLifeProgramming(bus_engine_env,gamma, N, j_max,num_samples,reference_st
 
 print(s.score_function_reference_state.coefficients)
 s.score_function_reference_state.visualize_fractal()
+
+state = 100000000000000
+s.compute_score_function_one_step(state,0).visualize_fractal()

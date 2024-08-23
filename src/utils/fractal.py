@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 class Fractal:
 
-    def __init__(self,alpha_0,alpha_1,coefficients):
+    def __init__(self,alpha_0,alpha_1,coefficients,j_shift):
 
         """
 
@@ -23,6 +23,7 @@ class Fractal:
         self.alpha_0 = alpha_0 
         self.alpha_1 = alpha_1
         self.coefficients = coefficients 
+        self.j_shift = j_shift
 
     def _derivative_mod_x(self,a,b,x):
 
@@ -65,8 +66,10 @@ class Fractal:
         return grad_f
     
     def _e_i_j(self,l,i,j):
+        j = j - self.j_shift
         val = (2**j)*(abs(l-(i/(2**j))) + abs(l-((i+1)/(2**j))) - abs(2*l-((2*i+1)/(2**(j)))))
         return val
+    
 
     def compute_fractal(self,l):
 
@@ -84,7 +87,7 @@ class Fractal:
         return f
 
     def visualize_fractal(self):
-        
+
         l_values = np.linspace(0, 1, 1000)
         S_values = np.array([self.compute_fractal(l) for l in l_values])
         plt.figure(figsize=(12, 8))

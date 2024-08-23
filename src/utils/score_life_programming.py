@@ -60,6 +60,30 @@ class ScoreLifeProgramming:
             else:
                 binary += '0'
         return binary
+    
+    def _divide_nested_list(self,nested_list, constant):
+        if isinstance(nested_list, list):
+            return [self._divide_nested_list(item, constant) for item in nested_list]
+        else:
+            return nested_list / constant
+
+    def compute_score_function_one_step(self,state,action) -> Fractal:
+        avg_reward = 0
+        self.env.set_state(state)
+        for i in range(self.num_samples):
+            nxt_state,reward = self.env.step(action)
+            avg_reward = avg_reward + reward
+            self.env.set_state(state)
+        avg_reward = avg_reward/self.num_samples
+        print(avg_reward)
+        beta_0 = (self.score_function_reference_state.alpha_0 + avg_reward)*self.gamma
+        beta_1 = self.score_function_reference_state.alpha_1*self.gamma
+        print(self.score_function_reference_state.coefficients)
+        coeff_prime = self._divide_nested_list(self.score_function_reference_state.coefficients,1/self.gamma)
+        j_shift = 1
+        score_function_one_step = Fractal(beta_0,beta_1,coeff_prime ,j_shift)
+        return score_function_one_step 
+
 
 
     def compute_score_function(self, state) -> Fractal:
@@ -173,7 +197,7 @@ class ScoreLifeProgramming:
                 i = i + 1
             coefficients.append(c_j)
             j = j + 1
-        fractal_function = Fractal(a_0,a_1,coefficients)
+        fractal_function = Fractal(a_0,a_1,coefficients,0)
         return fractal_function
     
     def _derivative_mod_x(a,b,x):

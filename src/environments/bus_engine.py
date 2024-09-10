@@ -22,7 +22,7 @@ class BusEngineEnvironment():
         # compute cost / reward
 
         # return that. 
-        if action == 0:
+        if action == 1:
             next_state = 0
             utility = self.cost_fun((1-action)*self.state) - action*100
             return next_state, utility

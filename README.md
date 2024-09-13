@@ -1,6 +1,6 @@
 # Beyond Dynamic Programming
 
-This project implements and compares various reinforcement learning algorithms, including the novel Score-life programming method introduced in the "Beyond Dynamic Programming" paper, alongside state-of-the-art methods from Stable Baselines 3.
+This project implements and compares various reinforcement learning algorithms, including the novel Score-life programming method introduced in the "Beyond Dynamic Programming" paper, alongside state-of-the-art methods from Stable Baselines 3. 
 
 ## Setup
 

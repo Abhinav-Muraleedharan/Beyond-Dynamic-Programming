@@ -1,3 +1,4 @@
+import time 
 import numpy as np
 import random as rand 
 import matplotlib.pyplot as plt
@@ -139,7 +140,6 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
         delta = 0
         for i, state in enumerate(state_space):
             env.set_state(state)
-            
             # Compute Q-values for both actions
             q_values = []
             for action in [0, 1]:
@@ -175,11 +175,14 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
     return V, policy
 
 if __name__ == '__main__':
+    
     b = BusEngineEnvironment(x=2,p=0.1,q=0.3)
     print("Computing Solution via Value Iteration - ")
+    start_time = time.time()
     V, policy = value_iteration_2(b)
     print("Finished Value Iteration")
-    
+    end_time = time.time()
+    print("time taken to complete computing solution:",end_time-start_time)
     replacement_threshold = np.argmax(policy)
     print(f"Replacement threshold: {replacement_threshold}")
 

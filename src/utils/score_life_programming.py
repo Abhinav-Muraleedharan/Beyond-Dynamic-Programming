@@ -1,4 +1,4 @@
-import gymnasium as gym
+import gym
 import numpy as np
 import math
 import seaborn as sns
@@ -29,9 +29,39 @@ class ScoreLifeProgramming:
         self.gamma = gamma
         self.reference_state = reference_state
         self.N = N
+        self.action_dim = env.action_space.n
         self.j_max = j_max
         self.num_samples = num_samples
         self.score_function_reference_state = self._compute_faber_schauder_coefficients()
+
+    def _real_to_action_sequence_base(self, real_number, num_bits, base):
+        """
+        Maps a real number to its representation in the specified base.
+
+        :param real_number: A real number in the interval [0, 1).
+        :param num_bits: Number of digits to compute in the representation.
+        :param base: The base to convert to (e.g., 2 for binary, 3 for ternary).
+        :return: String representing the number in the specified base.
+        """
+        if real_number == 0:
+            return '.' + '0' * num_bits
+        elif real_number == 1:
+            return '.' + str(base-1) * num_bits
+        
+        result = '.'
+        current_number = real_number
+        
+        for _ in range(num_bits):
+            current_number *= base
+            digit = int(current_number)  # Get the integer part
+            result += str(digit)
+            current_number -= digit  # Subtract the integer part
+            
+        return result
+
+
+
+
 
 
     def _real_to_action_sequence(self, real_number,num_bits):
@@ -72,6 +102,7 @@ class ScoreLifeProgramming:
         self.env.set_state(state)
         for i in range(self.num_samples):
             nxt_state,reward = self.env.step(action)
+            print(nxt_state)
             avg_reward = avg_reward + reward
             self.env.set_state(state)
         avg_reward = avg_reward/self.num_samples
@@ -135,16 +166,25 @@ class ScoreLifeProgramming:
 
         self.env.reset()
         R = 0
-        action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
+        #action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
+        M = self.action_dim
+        action_sequence = self._real_to_action_sequence_base(l,self.N,M)
+        print(action_sequence)
         self.env.set_state(X)
         avg_R = 0
 
         for j in range(self.num_samples):
             for i in range(len(action_sequence)-1):
                 action = int(action_sequence[i+1])
-                state, reward  = self.env.step(action)
+                state, reward,done,truncated  = self.env.step(action)
+                reward = (state[0])**2 + reward
+                #print(reward)
                 #reward = custom_reward(state,action) optional to implement custom reward functions
                 R = (self.gamma**(i))*reward + R
+                if done:
+                    break
+                if truncated:
+                    break
         avg_R = avg_R + R
         avg_R = avg_R/self.num_samples
         

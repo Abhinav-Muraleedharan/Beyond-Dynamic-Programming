@@ -1,4 +1,4 @@
-import gymnasium as gym
+import gym
 import numpy as np
 import math
 import seaborn as sns
@@ -127,15 +127,16 @@ class Monte_Carlo:
 
 ### define variables:
         
-if __name__ == "main":
+if __name__ == "__main__":
     env = gym.make("CartPole-v1", render_mode="human")
     env2 = gym.make("CartPole-v1", render_mode="human")
+    env_name = "CartPole-v1"
     gamma = 0.5
     action_size = env.action_space.n
     episode_length = 500
     max_iterations = 500
     i = 0
-    N = 20
+    N = 2
     initial_state = np.array([0.5, 0,0,0])
     state = initial_state
     env2.reset()

@@ -5,12 +5,18 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 from scipy import integrate
 
+class ActionSpace():
+    def __init__(self):
+        self.n = 2
+        self.actions = [0,1]
+
 class BusEngineEnvironment():
     def __init__(self,x,p,q):
         self.state = x
         self.p = p 
         self.q = q
         self.cost_fun = lambda x: -2*x
+        self.action_space = ActionSpace()
 
 
     def reset(self):
@@ -28,7 +34,10 @@ class BusEngineEnvironment():
         if action == 1:
             next_state = 0
             utility = self.cost_fun((1-action)*self.state) - action*100
-            return next_state, utility
+            done = True
+            terminated = True
+            self.state = next_state
+            return next_state, utility, done, terminated
         else:
             u = np.random.uniform()
             if u < self.p:
@@ -45,8 +54,9 @@ class BusEngineEnvironment():
         self.state = next_state 
         reward = 0 
         utility = self.cost_fun((1-action)*self.state) - action*100
-
-        return next_state, utility
+        done = False
+        terminated = False
+        return next_state, utility, done, terminated
 
 
 

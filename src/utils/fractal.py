@@ -102,6 +102,64 @@ class Fractal:
         print("Plot saved as 'score_life_function.png'")
 
 
+    def holder_minimize(self,epsilon=1e-6, max_sweeps=200):
+        """
+        
+        Compute Optima of fractal function using Fixed Point Iteration Algorithm
+        
+        """
+        f = self.compute_fractal
+        x = 0
+        x_min = 0
+        c_min = self.compute_fractal(x)
+        c_min = f(x)
+        beta_init = 0.5
+        beta = beta_init
+        step_tol = 1e-5
+        flag = 0
+
+        while beta >= epsilon:
+            x = 0.0
+            prev_x = -1
+            sweep_count = 0
+            print("in outer loop")
+            if flag == 1:
+                break
+            while x < 1.0 and sweep_count < max_sweeps:
+                #print("in inner loop")
+                step = beta * (f(x) - c_min)
+
+                if abs(step) < step_tol:
+                    step = beta * 1e-3
+
+                x_new = x + step
+                x_new = min(x_new, 1.0)
+                current_val = f(x_new)
+
+                if current_val < c_min:
+                    c_min = current_val
+                    x_min = x_new
+
+                if abs(x_new - prev_x) < step_tol:
+                    print("Reached Breakpoint")
+                    flag = 1
+                    break
+
+                prev_x = x
+                x = x_new
+                sweep_count += 1
+
+            beta /= 2
+        print(sweep_count)
+
+        return c_min,x_min
+
+
+
+
+
+
+
 
 
 

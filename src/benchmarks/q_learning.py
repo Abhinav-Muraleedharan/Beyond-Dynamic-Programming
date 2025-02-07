@@ -28,6 +28,7 @@ def QLearning(env, learning, discount, epsilon, min_eps, episodes):
     
     # Run Q learning algorithm
     for i in range(episodes):
+        print(i)
         # Initialize parameters
         done = False
         tot_reward, reward = 0,0
@@ -76,7 +77,7 @@ def QLearning(env, learning, discount, epsilon, min_eps, episodes):
         # Track rewards
         reward_list.append(tot_reward)
         
-        if (i+1) % 100 == 0:
+        if (i+1) % 10 == 0:
             ave_reward = np.mean(reward_list)
             ave_reward_list.append(ave_reward)
             reward_list = []
@@ -85,18 +86,99 @@ def QLearning(env, learning, discount, epsilon, min_eps, episodes):
    
     return ave_reward_list,Q
 
+def test_policy(env, Q, num_episodes=5, render=True):
+    """
+    Test the learned Q-function on the environment.
+    
+    Args:
+        env: Mountain Car environment
+        Q: Learned Q-function table
+        num_episodes: Number of episodes to test
+        render: Whether to render the environment
+    
+    Returns:
+        rewards: List of total rewards for each episode
+        steps: List of steps taken for each episode
+    """
+    rewards = []
+    steps = []
+    
+    for episode in range(num_episodes):
+        state = env.reset()
+        total_reward = 0
+        step = 0
+        done = False
+        
+        while not done:
+            if render:
+                frame = env.render()
+                if frame is not None:
+                    plt.imshow(frame)
+                    plt.axis('off')
+                    plt.pause(0.00001) 
+          # Add small delay to make rendering visible
+            print(state)
+            # Discretize state the same way as in training
+            if step == 0:
+                state_adj = (state[0] - env.observation_space.low)*np.array([10, 100])
+                state_adj = np.round(state_adj, 0).astype(int)
+            else:
+                state_adj = (state - env.observation_space.low)*np.array([10, 100])
+                state_adj = np.round(state_adj, 0).astype(int)
+            print(state_adj)
+            # Select action greedily
+            action = np.argmax(Q[state_adj[0], state_adj[1]])
+            
+            # Take action
+            state, reward, done, info = env.step(action)
+            total_reward += reward
+            step += 1
+            
+            if done:
+                print(f"Episode {episode + 1}: Total Reward = {total_reward}, Steps = {step}")
+                if state[0] >= 0.5:
+                    print("Success! Reached the goal!")
+                break
+        
+        rewards.append(total_reward)
+        steps.append(step)
+    
+    env.close()
+    
+    # Plot results
+    plt.figure(figsize=(12, 4))
+    
+    plt.subplot(1, 2, 1)
+    plt.plot(rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Total Reward')
+    plt.title('Rewards during Testing')
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(steps)
+    plt.xlabel('Episode')
+    plt.ylabel('Steps')
+    plt.title('Steps per Episode during Testing')
+    
+    plt.tight_layout()
+    plt.show()
+    
+    return rewards, steps
+
+
 
 if __name__ =='__main__':
     # Run Q-learning algorithm
-
+    print("Running Q-Learning algorithm")
     env = MountainCarEnv()
     env.reset()
     start_time = time.time()
-    rewards,Q = QLearning(env, 0.2, 0.9, 0.8, 0, 5000)
+    rewards,Q = QLearning(env, 0.2, 0.9, 0.8, 0, 50)
     end_time = time.time()
-    
+    #test_policy(env, Q, num_episodes=5, render=False)
+    print(rewards)
     # Plot Rewards
-    plt.plot(100*(np.arange(len(rewards)) + 1), rewards)
+    plt.plot(1*(np.arange(len(rewards)) + 1), rewards)
     plt.xlabel('Episodes')
     plt.ylabel('Average Reward')
     plt.title('Average Reward vs Episodes')

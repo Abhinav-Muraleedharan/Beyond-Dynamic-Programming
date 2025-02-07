@@ -101,7 +101,7 @@ class ScoreLifeProgramming:
         avg_reward = 0
         self.env.set_state(state)
         for i in range(self.num_samples):
-            nxt_state,reward = self.env.step(action)
+            nxt_state,reward,_,_ = self.env.step(action)
             print(nxt_state)
             avg_reward = avg_reward + reward
             self.env.set_state(state)
@@ -169,26 +169,34 @@ class ScoreLifeProgramming:
         #action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
         M = self.action_dim
         action_sequence = self._real_to_action_sequence_base(l,self.N,M)
+        #action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
         print(action_sequence)
         self.env.set_state(X)
         avg_R = 0
 
         for j in range(self.num_samples):
+            R = 0
+            self.env.set_state(X)
+            print("Initial State",self.env.current_state())
             for i in range(len(action_sequence)-1):
                 action = int(action_sequence[i+1])
                 state, reward,done,truncated  = self.env.step(action)
-                reward = (state[0])**2 + reward
+                #reward = (state[0])**2 + reward
                 #print(reward)
                 #reward = custom_reward(state,action) optional to implement custom reward functions
                 R = (self.gamma**(i))*reward + R
+                #print("reward",reward)
+                print("state",state)
                 if done:
+                    print("done")
                     break
                 if truncated:
+                    print("truncated")
                     break
-        avg_R = avg_R + R
+            avg_R = avg_R + R
         avg_R = avg_R/self.num_samples
         
-        return R
+        return avg_R
 
        
 
@@ -223,7 +231,7 @@ class ScoreLifeProgramming:
         X = self.reference_state
         j_max = self.j_max 
         a_0 = self.S(0,X)
-        a_1 = self.S(1,X,) - self.S(0,X)
+        a_1 = self.S(1,X) - self.S(0,X)
         ####compute a_i,j
         i = 0
         j = 0

@@ -3,8 +3,6 @@
 import numpy as np
 
 
-
-
 def compute_faber_schauder_coefficients(x, gamma, N, j_max, env):
     def S(l, X, gamma, N, env):
         # Implement the S function as described in the paper

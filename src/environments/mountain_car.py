@@ -8,17 +8,22 @@ class MountainCarEnv(gym.Env):
         self.env = gym.make('MountainCar-v0', render_mode="rgb_array")
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
+        #self.state = self.env.unwrapped.state
+
+    def current_state(self):
+        return self.env.unwrapped.state
 
     def reset(self):
         return self.env.reset()
     
     def set_state(self, state):
-        self.env.state = state 
+        self.env.unwrapped.state = state 
 
     def step(self, action):
         #print(self.env.step(action))
         next_state, reward, done,truncated,_ = self.env.step(action)
-        return next_state, reward, done, truncated
+        cost = reward
+        return next_state, cost, done, truncated
 
     def render(self):
         return self.env.render()

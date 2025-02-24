@@ -9,6 +9,46 @@ import scipy
 from scipy.stats import gaussian_kde
 import matplotlib as mpl
 from src.utils.fractal import Fractal
+import multiprocessing as mp
+from functools import partial
+import time
+
+def parallel_simulate_trajectory(params):
+    """
+    Standalone function for parallel simulation
+    params: tuple of (X, action_sequence, p, q, gamma)
+    """
+    X, action_sequence, p, q, gamma = params
+    state = X
+    R = 0
+    
+    for i in range(len(action_sequence)-1):
+        action = int(action_sequence[i+1])
+        
+        # Replicate the step logic from BusEngineEnvironment
+        if action == 1:
+            next_state = 0
+            utility = -2 * ((1-action) * state) - action * 100
+            state = next_state
+        else:
+            u = np.random.uniform()
+            if u < p:
+                delta_x = np.random.uniform(0, 5000)
+            elif p <= u < p + q:
+                delta_x = np.random.uniform(5000, 10000)
+            else:
+                delta_x = np.random.uniform(10000, 100000000)
+            
+            next_state = state + delta_x
+            state = next_state
+            utility = -2 * ((1-action) * state) - action * 100
+        
+        R = (gamma**i) * utility + R
+        
+        if action == 1:  # Terminal state
+            break
+    
+    return R
 
 class ScoreLifeProgramming:
 
@@ -32,7 +72,14 @@ class ScoreLifeProgramming:
         self.action_dim = env.action_space.n
         self.j_max = j_max
         self.num_samples = num_samples
-        self.score_function_reference_state = self._compute_faber_schauder_coefficients()
+        self.n_cores = mp.cpu_count()
+        #print(f"Available CPU cores: {self.n_cores}")
+
+    def compute_score_function_reference_state(self):
+        return self._compute_faber_schauder_coefficients()
+        
+    def compute_score_function_reference_state_parallel(self):
+        return self._compute_faber_schauder_coefficients_parallel()
 
     def _real_to_action_sequence_base(self, real_number, num_bits, base):
         """
@@ -102,7 +149,7 @@ class ScoreLifeProgramming:
         self.env.set_state(state)
         for i in range(self.num_samples):
             nxt_state,reward,_,_ = self.env.step(action)
-            print(nxt_state)
+            #print(nxt_state)
             avg_reward = avg_reward + reward
             self.env.set_state(state)
         avg_reward = avg_reward/self.num_samples
@@ -170,14 +217,14 @@ class ScoreLifeProgramming:
         M = self.action_dim
         action_sequence = self._real_to_action_sequence_base(l,self.N,M)
         #action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
-        print(action_sequence)
+        #print(action_sequence)
         self.env.set_state(X)
         avg_R = 0
 
         for j in range(self.num_samples):
             R = 0
             self.env.set_state(X)
-            print("Initial State",self.env.current_state())
+            #print("Initial State",self.env.current_state())
             for i in range(len(action_sequence)-1):
                 action = int(action_sequence[i+1])
                 state, reward,done,truncated  = self.env.step(action)
@@ -186,12 +233,12 @@ class ScoreLifeProgramming:
                 #reward = custom_reward(state,action) optional to implement custom reward functions
                 R = (self.gamma**(i))*reward + R
                 #print("reward",reward)
-                print("state",state)
+                #print("state",state)
                 if done:
-                    print("done")
+                    #print("done")
                     break
                 if truncated:
-                    print("truncated")
+                    #print("truncated")
                     break
             avg_R = avg_R + R
         avg_R = avg_R/self.num_samples
@@ -307,4 +354,160 @@ class ScoreLifeProgramming:
             j = j + 1
         return f
     
+    def _simulate_trajectory_parallel(self, X, action_sequence, seed):
+        """Helper function to simulate a single trajectory in parallel"""
+        np.random.seed(seed)
+        self.env.set_state(X)
+        R = 0
+        for i in range(len(action_sequence)-1):
+            action = int(action_sequence[i+1])
+            state, reward, done, truncated = self.env.step(action)
+            R = (self.gamma**i) * reward + R
+            if done or truncated:
+                break
+        return R
+
+    def S_parallel(self, l, X, existing_pool=None):
+        """Modified parallel Score function evaluation that can use an existing pool"""
+        start_time = time.time()
+        action_sequence = self._real_to_action_sequence_base(l, self.N, self.action_dim)
+        
+        # Prepare parameters for parallel simulation
+        params = [(X, action_sequence, self.env.p, self.env.q, self.gamma) 
+                 for _ in range(self.num_samples)]
+        
+        # Use existing pool if provided, otherwise create new one
+        if existing_pool is not None:
+            results = existing_pool.map(parallel_simulate_trajectory, params)
+        else:
+            with mp.Pool(processes=self.n_cores) as pool:
+                results = pool.map(parallel_simulate_trajectory, params)
+        
+        avg_R = sum(results) / self.num_samples
+        end_time = time.time()
+        print(f"Parallel S computation took: {end_time - start_time:.2f} seconds")
+        return avg_R
+
+    def _compute_a_ij_parallel(self, X, i, j, pool):
+        """Modified helper function that uses existing pool"""
+        l_1 = (2*i + 1)/(2**(j+1))
+        l_2 = i/(2**j)
+        l_3 = (i+1)/(2**j)
+        a_ij = self.S_parallel(l_1, X, pool) - 0.5*(self.S_parallel(l_2, X, pool) + self.S_parallel(l_3, X, pool))
+        return a_ij
+
+    def _compute_faber_schauder_coefficients_parallel(self):
+        """Modified parallel version that uses a single pool"""
+        start_time = time.time()
+        X = self.reference_state
+        j_max = self.j_max
+
+        # Create a single pool for all computations
+        with mp.Pool(processes=self.n_cores) as pool:
+            print("Computing a_0 and a_1...")
+            a_0 = self.S_parallel(0, X, pool)
+            a_1 = self.S_parallel(1, X, pool) - self.S_parallel(0, X, pool)
+
+            # Prepare all parameters for coefficient computation
+            params = []
+            for j in range(j_max):
+                for i in range(2**j):
+                    l_1 = (2*i + 1)/(2**(j+1))
+                    l_2 = i/(2**j)
+                    l_3 = (i+1)/(2**j)
+                    params.append((X, l_1, l_2, l_3, self.env.p, self.env.q, self.gamma, self.N, self.action_dim, self.num_samples))
+
+            print(f"Computing {len(params)} Faber-Schauder coefficients in parallel...")
+            results = pool.map(parallel_compute_coefficient, params)
+
+        # Reorganize results
+        coefficients = []
+        idx = 0
+        for j in range(j_max):
+            c_j = []
+            for i in range(2**j):
+                c_j.append(results[idx])
+                idx += 1
+            coefficients.append(c_j)
+
+        end_time = time.time()
+        print(f"Parallel Faber-Schauder computation complete! Took {end_time - start_time:.2f} seconds")
+        return Fractal(a_0, a_1, coefficients, 0)
+
+    def compare_performance(self, l, X):
+        """
+        Compare performance between parallel and sequential implementations
+        """
+        print("\nComparing performance between sequential and parallel implementations:")
+        
+        # Sequential timing
+        start_time = time.time()
+        sequential_result = self.S(l, X)
+        sequential_time = time.time() - start_time
+        print(f"Sequential computation took: {sequential_time:.2f} seconds")
+        
+        # Parallel timing
+        start_time = time.time()
+        parallel_result = self.S_parallel(l, X)
+        parallel_time = time.time() - start_time
+        print(f"Parallel computation took: {parallel_time:.2f} seconds")
+        
+        speedup = sequential_time / parallel_time
+        print(f"Speedup: {speedup:.2f}x")
+        
+        # Verify results are similar
+        print(f"Results difference: {abs(sequential_result - parallel_result):.6f}")
+        
+        return {
+            'sequential_time': sequential_time,
+            'parallel_time': parallel_time,
+            'speedup': speedup,
+            'sequential_result': sequential_result,
+            'parallel_result': parallel_result
+        }
+
+def parallel_compute_coefficient(params):
+    """Standalone function for parallel coefficient computation"""
+    X, l_1, l_2, l_3, p, q, gamma, N, action_dim, num_samples = params
+    
+    # Compute S values for each l
+    s1 = parallel_compute_S(X, l_1, p, q, gamma, N, action_dim, num_samples)
+    s2 = parallel_compute_S(X, l_2, p, q, gamma, N, action_dim, num_samples)
+    s3 = parallel_compute_S(X, l_3, p, q, gamma, N, action_dim, num_samples)
+    
+    # Compute coefficient
+    a_ij = s1 - 0.5 * (s2 + s3)
+    return a_ij
+
+def parallel_compute_S(X, l, p, q, gamma, N, action_dim, num_samples):
+    """Standalone function for parallel S computation"""
+    # Convert l to action sequence
+    action_sequence = _real_to_action_sequence_base_standalone(l, N, action_dim)
+    
+    # Run simulations
+    results = []
+    for _ in range(num_samples):
+        params = (X, action_sequence, p, q, gamma)
+        results.append(parallel_simulate_trajectory(params))
+    
+    return sum(results) / num_samples
+
+def _real_to_action_sequence_base_standalone(real_number, num_bits, base):
+    """Standalone version of _real_to_action_sequence_base"""
+    if real_number == 0:
+        return '.' + '0' * num_bits
+    elif real_number == 1:
+        return '.' + str(base-1) * num_bits
+    
+    result = '.'
+    current_number = real_number
+    
+    for _ in range(num_bits):
+        current_number *= base
+        digit = int(current_number)
+        result += str(digit)
+        current_number -= digit
+        
+    return result
+
 

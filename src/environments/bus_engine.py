@@ -11,16 +11,23 @@ class ActionSpace():
         self.actions = [0,1]
 
 class BusEngineEnvironment():
+    def cost_function(self, x):
+        """Regular function instead of lambda"""
+        return -2 * x
+
     def __init__(self,x,p,q):
         self.state = x
         self.p = p 
         self.q = q
-        self.cost_fun = lambda x: -2*x
+        self.cost_fun = self.cost_function  # Use regular function instead of lambda
         self.action_space = ActionSpace()
 
 
     def reset(self):
         self.state = 0
+
+    def current_state(self):
+        return self.state 
 
     def set_state(self,X):
         self.state = X
@@ -141,7 +148,7 @@ def plot_and_save_results(V, policy, max_state=100000, filename_prefix="bus_engi
 
 def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: float = 1e-6, max_iterations: int = 1000) -> Tuple[np.ndarray, np.ndarray]:
     # Discretize the state space
-    state_space = np.linspace(0, 100000, 100)
+    state_space = np.linspace(0, 100000, 300) 
     
     # Initialize value function
     V = np.zeros_like(state_space)
@@ -155,7 +162,7 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
             for action in [0, 1]:
                 q_value = 0
                 for _ in range(100):  # Monte Carlo sampling
-                    next_state, utility = env.step(action)
+                    next_state, utility,done,terminated = env.step(action)
                     next_state_idx = np.abs(state_space - next_state).argmin()
                     q_value += utility + gamma * V[next_state_idx]
                 q_values.append(q_value / 100)
@@ -176,7 +183,7 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
         for action in [0, 1]:
             q_value = 0
             for _ in range(100):  # Monte Carlo sampling
-                next_state, utility = env.step(action)
+                next_state, utility,done,terminated = env.step(action)
                 next_state_idx = np.abs(state_space - next_state).argmin()
                 q_value += utility + gamma * V[next_state_idx]
             q_values.append(q_value / 100)
@@ -189,7 +196,7 @@ if __name__ == '__main__':
     b = BusEngineEnvironment(x=2,p=0.1,q=0.3)
     print("Computing Solution via Value Iteration - ")
     start_time = time.time()
-    V, policy = value_iteration_2(b)
+    V, policy = value_iteration(b)
     print("Finished Value Iteration")
     end_time = time.time()
     print("time taken to complete computing solution:",end_time-start_time)
@@ -197,11 +204,16 @@ if __name__ == '__main__':
     print(f"Replacement threshold: {replacement_threshold}")
 
     # Plot and save the full results
-    plot_and_save_results(V, policy, max_state=100000, filename_prefix="bus_engine_full")
+    plot_and_save_results(V, policy, max_state=99, filename_prefix="bus_engine_full")
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -  75.59 s STATE SPACE SIZE: 100 
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -  158.11 s STATE SPACE SIZE: 200
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -  241.59 s STATE SPACE SIZE: 300
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 400
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 500
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 600
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 700
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 800
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 900
+    # TOTAL TIME TAKEN FOR VALUE ITERATION -     s STATE SPACE SIZE: 1000
 
-    for i in range(5):
-        r = np.random.choice([0, 1], p=[0.5, 0.5])
-        print(r)
-        next_state, utility = b.step(r)
-        print(next_state)
-        print("Utility:",utility)
+   

@@ -53,4 +53,4 @@ def compute_optimal_l(a_0, a_1, coefficients):
     J_optimal = compute_score_life_function(l)
     return l, J_optimal
 
-# Add more functions as needed
+# Add more functions as needed   

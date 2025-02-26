@@ -45,8 +45,8 @@ def parallel_simulate_trajectory(params):
         
         R = (gamma**i) * utility + R
         
-        if action == 1:  # Terminal state
-            break
+        # if action == 1:  # Terminal state
+        #     break
     
     return R
 
@@ -211,7 +211,7 @@ class ScoreLifeProgramming:
         
         """
 
-        self.env.reset()
+        #self.env.reset()
         R = 0
         #action_sequence =self._real_to_action_sequence(l,num_bits = self.N)
         M = self.action_dim

@@ -5,12 +5,13 @@ from src.utils.score_life_programming import ScoreLifeProgramming
 import multiprocessing as mp
 
 def main():
-    bus_engine_env =  BusEngineEnvironment(x=20,p=0.3,q=0.4)
-    gamma = 0.50
+    
+    gamma = 0.60
     N = 100
     j_max = 9
-    num_samples  = 2000
-    reference_state = 1000
+    num_samples  = 500
+    reference_state = 0
+    bus_engine_env =  BusEngineEnvironment(x=reference_state,p=0.3,q=0.4)
 
     
     s = ScoreLifeProgramming(bus_engine_env,gamma, N,j_max,num_samples,reference_state)
@@ -27,6 +28,8 @@ def main():
 
     print(score_function_ref_state.compute_optima_gradient_descent())
     print(score_function_ref_state.holder_minimize(1e-6,1000))
+    score_function_ref_state.visualize_fractal()
+    score_function_ref_state_parallel.visualize_fractal()
 
     # compute score-function for arbitrary state:
     # time_state_start = time.time()

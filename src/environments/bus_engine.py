@@ -41,8 +41,8 @@ class BusEngineEnvironment():
         if action == 1:
             next_state = 0
             utility = self.cost_fun((1-action)*self.state) - action*100
-            done = True
-            terminated = True
+            done = False
+            terminated = False
             self.state = next_state
             return next_state, utility, done, terminated
         else:

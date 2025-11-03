@@ -148,7 +148,7 @@ class ScoreLifeProgramming:
         avg_reward = 0
         self.env.set_state(state)
         for i in range(self.num_samples):
-            nxt_state,reward,_,_ = self.env.step(action)
+            nxt_state, reward, terminated, truncated, info = self.env.step(action)
             #print(nxt_state)
             avg_reward = avg_reward + reward
             self.env.set_state(state)
@@ -227,7 +227,7 @@ class ScoreLifeProgramming:
             #print("Initial State",self.env.current_state())
             for i in range(len(action_sequence)-1):
                 action = int(action_sequence[i+1])
-                state, reward,done,truncated  = self.env.step(action)
+                state, reward, terminated, truncated, info = self.env.step(action)
                 #reward = (state[0])**2 + reward
                 #print(reward)
                 #reward = custom_reward(state,action) optional to implement custom reward functions
@@ -361,9 +361,9 @@ class ScoreLifeProgramming:
         R = 0
         for i in range(len(action_sequence)-1):
             action = int(action_sequence[i+1])
-            state, reward, done, truncated = self.env.step(action)
+            state, reward, terminated, truncated, info = self.env.step(action)
             R = (self.gamma**i) * reward + R
-            if done or truncated:
+            if terminated or truncated:
                 break
         return R
 

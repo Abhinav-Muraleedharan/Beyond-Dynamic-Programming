@@ -122,47 +122,52 @@ def test_policy(env, policy, config):
     df = config['discretization_factors']
     total_rewards = []
     steps_list = []
-    
+
+    # Calculate number of discrete states (same as in value_iteration)
+    num_pos = int((params['max_position'] - params['min_position']) * df[0]) + 1
+    num_vel = int(2 * params['max_speed'] * df[1]) + 1
+
     for _ in range(100):
-        state = env.reset()
+        state, info = env.reset()
         done = False
         total_reward = 0
         steps = 0
-        
+
         while not done and steps < 1000:
-            frame = env.render() 
+            frame = env.render()
             if frame is not None:
                 plt.imshow(frame)
                 plt.axis('off')
                 plt.pause(0.00001)  # Small pause to allow rendering
             # Convert state to discrete
             print(steps)
-            print("state:",state)
-            if steps == 0:
-                pos, vel = state[0]
-            else:
-                pos, vel = state
-            print("pos:",pos)
-            print("vel:",vel)
-            i = int(round((pos - params['min_position']) * df[0] / 
-                        (1)))
-            print("i value:",i)
-            i = np.clip(i, 0, df[0])
-            j = int(round((vel + params['max_speed']) * df[1] / 
-                        (1)))
-            print("j value:",j)
+            print("state:", state)
+            pos, vel = state
+            print("pos:", pos)
+            print("vel:", vel)
 
-            j = np.clip(j, 0, df[1]-1)
-            print("i value:",i)
-            print("j value:",j) 
+            # Correct discretization matching value_iteration
+            i = int(round((pos - params['min_position']) * df[0] /
+                        (params['max_position'] - params['min_position'])))
+            print("i value:", i)
+            i = np.clip(i, 0, num_pos - 1)
+
+            j = int(round((vel + params['max_speed']) * df[1] /
+                        (2 * params['max_speed'])))
+            print("j value:", j)
+            j = np.clip(j, 0, num_vel - 1)
+
+            print("i value:", i)
+            print("j value:", j)
             action = policy[i, j]
-            state, reward, done, _ = env.step(action)
+            state, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             total_reward += reward
             steps += 1
-        
+
         total_rewards.append(total_reward)
         steps_list.append(steps)
-    
+
     print(f"Average reward: {np.mean(total_rewards):.2f}")
     print(f"Average steps: {np.mean(steps_list):.2f}")
     return total_rewards, steps_list

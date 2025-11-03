@@ -32,11 +32,11 @@ def QLearning(env, learning, discount, epsilon, min_eps, episodes):
         # Initialize parameters
         done = False
         tot_reward, reward = 0,0
-        state = env.reset()
-        #print(state[0])
+        state, info = env.reset()
+        #print(state)
         # Discretize state
         #print(env.observation_space.low)
-        state_adj = (np.array(state[0] - env.observation_space.low))*np.array([10, 100])
+        state_adj = (np.array(state - env.observation_space.low))*np.array([10, 100])
         state_adj = np.round(state_adj, 0).astype(int)
         while done != True:   
             # Render environment for last five episodes
@@ -50,7 +50,8 @@ def QLearning(env, learning, discount, epsilon, min_eps, episodes):
                 action = np.random.randint(0, env.action_space.n)
                 
             # Get next state and reward
-            state2, reward, done, info = env.step(action) 
+            state2, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated 
             
             # Discretize state2
             state2_adj = (state2 - env.observation_space.low)*np.array([10, 100])
@@ -104,33 +105,30 @@ def test_policy(env, Q, num_episodes=5, render=True):
     steps = []
     
     for episode in range(num_episodes):
-        state = env.reset()
+        state, info = env.reset()
         total_reward = 0
         step = 0
         done = False
-        
+
         while not done:
             if render:
                 frame = env.render()
                 if frame is not None:
                     plt.imshow(frame)
                     plt.axis('off')
-                    plt.pause(0.00001) 
+                    plt.pause(0.00001)
           # Add small delay to make rendering visible
             print(state)
             # Discretize state the same way as in training
-            if step == 0:
-                state_adj = (state[0] - env.observation_space.low)*np.array([10, 100])
-                state_adj = np.round(state_adj, 0).astype(int)
-            else:
-                state_adj = (state - env.observation_space.low)*np.array([10, 100])
-                state_adj = np.round(state_adj, 0).astype(int)
+            state_adj = (state - env.observation_space.low)*np.array([10, 100])
+            state_adj = np.round(state_adj, 0).astype(int)
             print(state_adj)
             # Select action greedily
             action = np.argmax(Q[state_adj[0], state_adj[1]])
-            
+
             # Take action
-            state, reward, done, info = env.step(action)
+            state, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             total_reward += reward
             step += 1
             

@@ -21,9 +21,9 @@ class MountainCarEnv(gym.Env):
 
     def step(self, action):
         #print(self.env.step(action))
-        next_state, reward, done,truncated,_ = self.env.step(action)
+        next_state, reward, terminated, truncated, info = self.env.step(action)
         cost = reward
-        return next_state, cost, done, truncated
+        return next_state, cost, terminated, truncated, info
 
     def render(self):
         return self.env.render()
@@ -47,8 +47,8 @@ class MountainCarEnv(gym.Env):
     def get_next_states(self, state, action):
         # Simulate the environment for one step
         self.env.state = self.continuous_state(state)
-        next_state, reward, done, _ = self.env.step(action)
-        return self.discretize_state(next_state), reward, done
+        next_state, reward, terminated, truncated, info = self.env.step(action)
+        return self.discretize_state(next_state), reward, terminated, truncated, info
 
     def continuous_state(self, discrete_state):
         pos_bins = np.linspace(-1.2, 0.6, 20)

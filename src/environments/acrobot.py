@@ -48,8 +48,8 @@ class AcrobotEnv(gym.Env):
     def get_next_states(self, state, action):
         # Simulate the environment for one step
         self.env.state = self.continuous_state(state)
-        next_state, reward, done, _ = self.env.step(action)
-        return self.discretize_state(next_state), reward, done
+        next_state, reward, terminated, truncated, info = self.env.step(action)
+        return self.discretize_state(next_state), reward, terminated, truncated, info
 
     def continuous_state(self, discrete_state):
         cos_theta1_bins = np.linspace(-1, 1, 10)

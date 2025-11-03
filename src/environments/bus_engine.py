@@ -33,18 +33,19 @@ class BusEngineEnvironment():
         self.state = X
 
     def step(self, action):
-        # new state - 
+        # new state -
 
         # compute cost / reward
 
-        # return that. 
+        # return that.
         if action == 1:
             next_state = 0
             utility = self.cost_fun((1-action)*self.state) - action*100
-            done = False
             terminated = False
+            truncated = False
+            info = {}
             self.state = next_state
-            return next_state, utility, done, terminated
+            return next_state, utility, terminated, truncated, info
         else:
             u = np.random.uniform()
             if u < self.p:
@@ -58,12 +59,13 @@ class BusEngineEnvironment():
                 delta_x =  np.random.uniform(10000, 100000000)  # Use a large upper bound for practical purposes
 
         next_state = self.state + delta_x
-        self.state = next_state 
-        reward = 0 
+        self.state = next_state
+        reward = 0
         utility = self.cost_fun((1-action)*self.state) - action*100
-        done = False
         terminated = False
-        return next_state, utility, done, terminated
+        truncated = False
+        info = {}
+        return next_state, utility, terminated, truncated, info
 
 
 
@@ -162,7 +164,7 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
             for action in [0, 1]:
                 q_value = 0
                 for _ in range(100):  # Monte Carlo sampling
-                    next_state, utility,done,terminated = env.step(action)
+                    next_state, utility, terminated, truncated, info = env.step(action)
                     next_state_idx = np.abs(state_space - next_state).argmin()
                     q_value += utility + gamma * V[next_state_idx]
                 q_values.append(q_value / 100)
@@ -183,7 +185,7 @@ def value_iteration(env: BusEngineEnvironment, gamma: float = 0.99, epsilon: flo
         for action in [0, 1]:
             q_value = 0
             for _ in range(100):  # Monte Carlo sampling
-                next_state, utility,done,terminated = env.step(action)
+                next_state, utility, terminated, truncated, info = env.step(action)
                 next_state_idx = np.abs(state_space - next_state).argmin()
                 q_value += utility + gamma * V[next_state_idx]
             q_values.append(q_value / 100)

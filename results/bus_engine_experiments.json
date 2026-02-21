@@ -1,0 +1,38 @@
+[
+  {
+    "config": "Standard (p=0.1, q=0.3)",
+    "p": 0.1,
+    "q": 0.3,
+    "Value_Iteration": {
+      "reward": -35210.31856818815,
+      "threshold": 2040.8163265306123
+    },
+    "ScoreLife_Exact": -23419.9455214483,
+    "ScoreLife_Approx": -31006.417568160774,
+    "Random": -48003.67339148527
+  },
+  {
+    "config": "High small damage (p=0.2, q=0.2)",
+    "p": 0.2,
+    "q": 0.2,
+    "Value_Iteration": {
+      "reward": -35625.31567529947,
+      "threshold": 1020.4081632653061
+    },
+    "ScoreLife_Exact": -22643.284599464627,
+    "ScoreLife_Approx": -30220.51429686149,
+    "Random": -46261.156302158815
+  },
+  {
+    "config": "High large damage (p=0.05, q=0.4)",
+    "p": 0.05,
+    "q": 0.4,
+    "Value_Iteration": {
+      "reward": -36402.526995965476,
+      "threshold": 6122.448979591837
+    },
+    "ScoreLife_Exact": -21292.006368169943,
+    "ScoreLife_Approx": -31719.749087368433,
+    "Random": -44620.36363287611
+  }
+]

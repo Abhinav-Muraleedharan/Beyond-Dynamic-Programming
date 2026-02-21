@@ -11,11 +11,15 @@ The package includes:
 - Example implementations for various environments
 """
 
-from src.score_life_programming.exact_methods import compute_faber_schauder_coefficients, compute_optimal_l
-from src.score_life_programming.approximate_methods import approximate_score_life_function
+from src.score_life_programming.exact_methods import (
+    compute_faber_schauder_coefficients,
+    compute_optimal_l,
+    run_exact_method,
+)
+from src.score_life_programming.approximate_methods import run_approximate_method
 
 __all__ = [
-    'compute_faber_schauder_coefficients',
-    'compute_optimal_l',
-    'approximate_score_life_function',
+    "compute_faber_schauder_coefficients",
+    "compute_optimal_l",
+    "approximate_score_life_function",
 ]

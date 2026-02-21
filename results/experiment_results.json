@@ -1,0 +1,22 @@
+{
+  "CartPole-v1": {
+    "Random": 27.6,
+    "ScoreLife_Exact": 0.0,
+    "ScoreLife_Approx": 500.0,
+    "Q_Learning": 10.0,
+    "PPO_mean": 0.0,
+    "PPO_std": 0.0,
+    "A2C_mean": 0.0,
+    "A2C_std": 0.0
+  },
+  "MountainCar-v0": {
+    "Random": -49516.0,
+    "ScoreLife_Exact": 0,
+    "ScoreLife_Approx": 0,
+    "Q_Learning": -301.3333333333333,
+    "PPO_mean": 0.0,
+    "PPO_std": 0.0,
+    "A2C_mean": 0.0,
+    "A2C_std": 0.0
+  }
+}

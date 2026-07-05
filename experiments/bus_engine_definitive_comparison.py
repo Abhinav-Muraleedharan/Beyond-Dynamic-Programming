@@ -26,6 +26,22 @@ from src.utils.score_life_programming import ScoreLifeProgramming
 os.makedirs("results", exist_ok=True)
 
 
+def convert_numpy_types(obj):
+    """Convert numpy types to native Python types for JSON serialization."""
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    else:
+        return obj
+
+
 def run_value_iteration(gamma=0.99, n_states=100, n_samples=100):
     """
     Run Value Iteration with fixed environment.
@@ -334,7 +350,7 @@ def main():
 
     # Save all results
     with open('results/bus_engine_definitive_comparison.json', 'w') as f:
-        json.dump(all_results, f, indent=2)
+        json.dump(convert_numpy_types(all_results), f, indent=2)
     print("\nSaved: results/bus_engine_definitive_comparison.json")
 
     # Create gamma sensitivity plot

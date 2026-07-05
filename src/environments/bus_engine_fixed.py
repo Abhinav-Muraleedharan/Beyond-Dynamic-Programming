@@ -93,6 +93,7 @@ class BusEngineEnvironment(gym.Env):
         if isinstance(mileage, np.ndarray):
             mileage = float(mileage[0])
         self.state = np.array([float(mileage)], dtype=np.float32)
+        self._current_step = 0  # CRITICAL: Reset step counter!
 
     def current_state(self):
         """Get current mileage as scalar."""

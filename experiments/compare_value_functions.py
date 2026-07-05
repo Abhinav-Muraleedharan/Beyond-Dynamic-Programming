@@ -37,12 +37,14 @@ def compute_vi_value_function(gamma=0.9, n_states=50):
         for i, state in enumerate(states):
             # Q(state, keep)
             env.set_state(state)
-            operating_cost = -0.01 * state
 
             # Expected next state
             p, q = 0.1, 0.3
             expected_delta = p * 500 + q * 2000 + (1 - p - q) * 6500
             next_state = min(state + expected_delta, max_mileage)
+
+            # CRITICAL: Cost is on NEXT state, not current!
+            operating_cost = -0.01 * next_state
 
             # Interpolate V at next_state
             next_idx = np.argmin(np.abs(states - next_state))

@@ -227,7 +227,11 @@ class ScoreLifeProgramming:
             #print("Initial State",self.env.current_state())
             for i in range(len(action_sequence)-1):
                 action = int(action_sequence[i+1])
-                state, reward,done,truncated  = self.env.step(action)
+                result = self.env.step(action)
+            if len(result) == 5:
+                state, reward, done, truncated, _ = result
+            else:
+                state, reward, done, truncated = result
                 #reward = (state[0])**2 + reward
                 #print(reward)
                 #reward = custom_reward(state,action) optional to implement custom reward functions

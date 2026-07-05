@@ -291,8 +291,8 @@ def main():
     states, V, optimal_ls = compute_value_function_from_score(
         gamma=gamma,
         n_states=30,  # Reasonable resolution
-        l_resolution=15,  # Search resolution for l
-        num_samples=100  # Same as definitive comparison
+        l_resolution=30,  # Higher search resolution
+        num_samples=1000  # HIGH samples for convergence!
     )
 
     # Step 2: Extract policy from V

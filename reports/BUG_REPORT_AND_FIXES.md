@@ -408,6 +408,30 @@ The definitive comparison with the fixed Score-Life implementation has now compl
 
 **However, Score-Life is now WORKING** (not returning zeros), proving the indentation bug was the root cause of all previous failures!
 
+**DEEPER INSIGHT - Fundamental Algorithmic Difference:**
+
+After analyzing the action sequences encoded by l* values, we discovered:
+
+- **Value Iteration** solves for STATIONARY policies: π(state) → action
+  - Same action for same state every time
+  - Example: "Replace when mileage ≥ 2525"
+
+- **Score-Life Programming** solves for TIME-BASED action sequences: π(t) → action
+  - Action depends on timestep, not state
+  - Example for state 0: ".0110111100" = "Keep step 1, Keep step 2, Replace step 3, ..."
+  - Example for state 3000: ".0000111110" = "Keep for 5 steps, then replace"
+
+This is why:
+1. l* values vary across states (each state has different optimal time-sequence)
+2. Cannot extract simple threshold from l* (represents time, not state threshold)
+3. Policies are not directly comparable (different problem formulations!)
+
+**Implication**: VI and SL solve fundamentally different problems:
+- VI: Infinite-horizon MDP with stationary policies (state-dependent)
+- SL: Finite-horizon planning with action sequences (time-dependent)
+
+For the bus engine problem, VI's formulation is more natural because decisions should depend on current mileage (state), not on how many steps have elapsed (time).
+
 ---
 
 **Report Date**: July 5, 2026  

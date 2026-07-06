@@ -110,7 +110,8 @@ def compute_score_life_value_function(gamma=0.9, N=50, num_samples=1000, n_state
         if i % 5 == 0:
             print(f"  State {i}/{n_states}: {state:.0f} miles")
 
-        env = BusEngineEnvironment()
+        # CRITICAL: Set max_state to match VI's max_mileage!
+        env = BusEngineEnvironment(max_state=max_mileage)
         env.set_state(state)
 
         slp = ScoreLifeProgramming(

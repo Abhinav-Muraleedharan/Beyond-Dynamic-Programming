@@ -77,7 +77,8 @@ def compute_score_function(state, gamma=0.9, N=50, num_samples=1000, n_points=10
     print(f"\nComputing Score function for state={state}...")
     print(f"  N={N}, num_samples={num_samples}, evaluating at {n_points} points")
 
-    env = BusEngineEnvironment()
+    # CRITICAL: Match VI's max_mileage cap
+    env = BusEngineEnvironment(max_state=10000)
     env.set_state(state)
 
     slp = ScoreLifeProgramming(
@@ -119,7 +120,8 @@ def compute_monte_carlo_samples(state, l_values_to_test, gamma=0.9, N=50, num_sa
     print(f"\nComputing Monte Carlo variance at {len(l_values_to_test)} l values...")
     print(f"  Running {n_runs} independent trials per l value...")
 
-    env = BusEngineEnvironment()
+    # CRITICAL: Match VI's max_mileage cap
+    env = BusEngineEnvironment(max_state=10000)
 
     mc_results = {}
     for l_val in l_values_to_test:
@@ -145,7 +147,8 @@ def compute_faber_schauder_reconstruction(state, gamma=0.9, N=50, num_samples=10
 
     print(f"\nComputing Faber-Schauder reconstruction...")
 
-    env = BusEngineEnvironment()
+    # CRITICAL: Match VI's max_mileage cap
+    env = BusEngineEnvironment(max_state=10000)
     env.set_state(state)
 
     slp = ScoreLifeProgramming(

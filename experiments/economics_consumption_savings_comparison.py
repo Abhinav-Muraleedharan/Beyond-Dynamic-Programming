@@ -217,9 +217,9 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
 def main():
     gamma = 0.9
     N = 50
-    num_samples = 1000
+    num_samples = 3000  # Balanced: good accuracy, reasonable speed
     n_states = 30
-    n_l_points = 30
+    n_l_points = 75  # Fine l-grid for good optimization
     max_mileage = 10000
     transition_samples = 1000
 
@@ -258,12 +258,29 @@ def main():
     rmse = np.sqrt(np.mean((V_sl - V_vi)**2))
     mean_diff = np.mean(V_sl - V_vi)
 
+    # Detailed analysis
+    diff = V_sl - V_vi
+
+    print("\n" + "=" * 80)
+    print("DETAILED DIAGNOSTICS")
+    print("=" * 80)
+    print(f"\nFirst few states:")
+    for i in range(min(5, len(states_vi))):
+        print(f"  State {states_vi[i]:.0f}: VI={V_vi[i]:.2f}, SL={V_sl[i]:.2f}, Diff={diff[i]:.2f}")
+
+    print(f"\nLast few states:")
+    for i in range(max(0, len(states_vi)-5), len(states_vi)):
+        print(f"  State {states_vi[i]:.0f}: VI={V_vi[i]:.2f}, SL={V_sl[i]:.2f}, Diff={diff[i]:.2f}")
+
     print("\n" + "=" * 80)
     print("VERIFICATION: DO VI AND SCORE-LIFE MATCH?")
     print("=" * 80)
     print(f"\nCorrelation:  r = {corr:.6f}")
     print(f"RMSE:         {rmse:.4f}")
     print(f"Mean diff:    {mean_diff:.4f}")
+    print(f"Std of diff:  {np.std(diff):.4f}")
+    print(f"Min diff:     {np.min(diff):.4f}")
+    print(f"Max diff:     {np.max(diff):.4f}")
 
     if corr > 0.99:
         print("\n✅ EXCELLENT! Nearly perfect agreement (r > 0.99)")

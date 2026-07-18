@@ -217,9 +217,9 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
 def main():
     gamma = 0.9
     N = 50
-    num_samples = 3000  # Balanced: good accuracy, reasonable speed
+    num_samples = 2000  # Sweet spot found empirically
     n_states = 30
-    n_l_points = 75  # Fine l-grid for good optimization
+    n_l_points = 50  # Good balance of accuracy vs speed
     max_mileage = 10000
     transition_samples = 1000
 

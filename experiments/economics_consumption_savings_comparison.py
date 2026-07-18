@@ -1,14 +1,23 @@
 #!/usr/bin/env python
 """
-Consumption-Savings Problem: VI vs Score-Life Comparison
+Capital Asset Replacement: VI vs Score-Life Comparison
 
-Classic macroeconomics problem:
-- Agent has wealth W
-- Chooses consumption C
-- Saves S = W - C with stochastic returns
-- Maximizes lifetime utility
+Economics perspective on asset management:
+- Firm owns capital asset (bus engine)
+- Asset degrades over time (increasing maintenance costs)
+- Decision: Continue using (maintenance cost) vs Replace (fixed cost)
+- Objective: Minimize expected discounted costs
 
-Demonstrates Score-Life on canonical economics MDP.
+This is a canonical problem in:
+- Industrial organization (capital investment)
+- Operations research (equipment replacement)
+- Public economics (infrastructure management)
+
+Economic interpretation:
+- State = Asset age/condition (mileage)
+- Action = Keep (pay maintenance) vs Replace (pay fixed cost)
+- Dynamics = Stochastic deterioration
+- Costs = Operating costs + replacement costs
 """
 
 import numpy as np
@@ -20,88 +29,74 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from src.environments.consumption_savings import ConsumptionSavingsEnvironment
+from src.environments.bus_engine_fixed import BusEngineEnvironment
 from src.utils.score_life_programming import ScoreLifeProgramming
 
 
-def precompute_transitions(n_states, max_wealth, transition_samples=1000):
+def precompute_transitions(n_states, max_mileage, transition_samples=1000):
     """Pre-compute transition samples for deterministic VI."""
 
     print("Pre-computing transitions...")
-    states = np.linspace(0, max_wealth, n_states)
-    env = ConsumptionSavingsEnvironment(max_wealth=max_wealth)
+    states = np.linspace(0, max_mileage, n_states)
+    env = BusEngineEnvironment(max_state=max_mileage)
 
     transitions = {}
 
-    for i, wealth in enumerate(states):
-        if i % 10 == 0:
+    for i, mileage in enumerate(states):
+        if i % 5 == 0:
             print(f"  State {i}/{n_states}")
 
-        # For each wealth level, sample transitions for different consumption rates
-        # We'll use consumption rate = 0.5 as baseline (save 50%)
-        consumption_rate = 0.5
-
-        next_wealths = []
-        utilities = []
+        next_states = []
+        rewards = []
 
         np.random.seed(i)  # Reproducible
         for sample in range(transition_samples):
-            env.set_state(wealth)
-            next_wealth, utility, _, _, _ = env.step(np.array([consumption_rate]))
-            next_wealths.append(next_wealth[0])
-            utilities.append(utility)
+            env.set_state(mileage)
+            next_state, reward, _, _, _ = env.step(0)  # Keep action
+            next_states.append(next_state[0])
+            rewards.append(reward)
 
         transitions[i] = {
-            'next_wealths': np.array(next_wealths),
-            'utilities': np.array(utilities)
+            'next_states': np.array(next_states),
+            'rewards': np.array(rewards)
         }
 
     print(f"  Done! Cached {len(transitions)} state transitions")
     return transitions
 
 
-def value_iteration_consumption(gamma, n_states, max_wealth, transitions, tolerance=1e-6):
-    """VI for consumption-savings problem using cached transitions."""
+def value_iteration_bus_engine(gamma, n_states, max_mileage, transitions, tolerance=1e-6):
+    """VI for bus engine replacement using cached transitions."""
 
     print("\n" + "=" * 80)
-    print("VALUE ITERATION: Consumption-Savings Problem")
+    print("VALUE ITERATION: Capital Asset Replacement")
     print("=" * 80)
 
-    states = np.linspace(0, max_wealth, n_states)
+    states = np.linspace(0, max_mileage, n_states)
     V = np.zeros(n_states)
-
-    # Test different consumption rates
-    consumption_rates = np.linspace(0.1, 0.9, 9)
 
     for iteration in range(1000):
         V_new = np.zeros(n_states)
 
-        for i, wealth in enumerate(states):
-            if wealth < 10:  # Below subsistence, must consume everything
-                # Use cached baseline transition
-                next_wealths = transitions[i]['next_wealths']
-                utilities = transitions[i]['utilities']
-                V_next_samples = [V[np.argmin(np.abs(states - nw))] for nw in next_wealths]
-                V_new[i] = np.mean(utilities) + gamma * np.mean(V_next_samples)
-            else:
-                # Try different consumption rates
-                Q_values = []
+        for i, mileage in enumerate(states):
+            # Use cached transition samples
+            next_states = transitions[i]['next_states']
+            rewards = transitions[i]['rewards']
 
-                for c_rate in consumption_rates:
-                    # Approximate using cached samples (scaled by consumption rate)
-                    # This is simplified - in practice you'd cache for each c_rate
-                    next_wealths = transitions[i]['next_wealths'] * (1 - c_rate) / 0.5
+            # Interpolate V at each sampled next state
+            V_next_samples = []
+            for ns in next_states:
+                next_idx = np.argmin(np.abs(states - ns))
+                V_next_samples.append(V[next_idx])
 
-                    # Utility from consumption
-                    consumption = wealth * c_rate
-                    gamma_utility = 2.0
-                    utility = (consumption ** (1 - gamma_utility)) / (1 - gamma_utility)
+            # Expected cost and expected V(next)
+            E_reward = np.mean(rewards)
+            E_V_next = np.mean(V_next_samples)
 
-                    # Expected continuation value
-                    V_next_samples = [V[np.argmin(np.abs(states - nw))] for nw in next_wealths]
-                    Q_values.append(utility + gamma * np.mean(V_next_samples))
+            Q_keep = E_reward + gamma * E_V_next
+            Q_replace = -100 + gamma * V[0]
 
-                V_new[i] = max(Q_values)
+            V_new[i] = max(Q_keep, Q_replace)
 
         max_change = np.max(np.abs(V_new - V))
 
@@ -114,45 +109,45 @@ def value_iteration_consumption(gamma, n_states, max_wealth, transitions, tolera
 
         V = V_new.copy()
 
-    print(f"\n  V(wealth=0) = {V[0]:.6f}")
-    print(f"  V(wealth={max_wealth}) = {V[-1]:.6f}")
+    print(f"\n  V(mileage=0) = {V[0]:.6f}")
+    print(f"  V(mileage={max_mileage}) = {V[-1]:.6f}")
 
     return states, V
 
 
-def score_life_consumption(gamma, N, num_samples, n_states, n_l_points, max_wealth):
-    """Score-Life for consumption-savings problem."""
+def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_mileage):
+    """Score-Life for bus engine replacement."""
 
     print("\n" + "=" * 80)
-    print("SCORE-LIFE: Consumption-Savings Problem")
+    print("SCORE-LIFE: Capital Asset Replacement")
     print("=" * 80)
 
-    states = np.linspace(0, max_wealth, n_states)
+    states = np.linspace(0, max_mileage, n_states)
     V_sl = np.zeros(n_states)
     optimal_l = np.zeros(n_states)
 
-    for i, wealth in enumerate(states):
-        if i % 10 == 0:
-            print(f"  Wealth ${wealth:.0f} ({i}/{n_states})")
+    for i, mileage in enumerate(states):
+        if i % 5 == 0:
+            print(f"  Mileage {mileage:.0f} miles ({i}/{n_states})")
 
-        env = ConsumptionSavingsEnvironment(max_wealth=max_wealth)
-        env.set_state(wealth)
+        env = BusEngineEnvironment(max_state=max_mileage)
+        env.set_state(mileage)
 
         slp = ScoreLifeProgramming(
             env, gamma=gamma, N=N, j_max=5,
             num_samples=num_samples,
-            reference_state=np.array([wealth])
+            reference_state=np.array([mileage])
         )
 
         l_values = np.linspace(0.0, 1.0, n_l_points)
-        scores = [slp.S(l, np.array([wealth])) for l in l_values]
+        scores = [slp.S(l, np.array([mileage])) for l in l_values]
 
         max_idx = np.argmax(scores)
         V_sl[i] = scores[max_idx]
         optimal_l[i] = l_values[max_idx]
 
-    print(f"\n  V(wealth=0) = {V_sl[0]:.6f}")
-    print(f"  V(wealth={max_wealth}) = {V_sl[-1]:.6f}")
+    print(f"\n  V(mileage=0) = {V_sl[0]:.6f}")
+    print(f"  V(mileage={max_mileage}) = {V_sl[-1]:.6f}")
 
     return states, V_sl, optimal_l
 
@@ -168,9 +163,9 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
              alpha=0.8, label='Value Iteration')
     ax1.plot(states, V_sl, 'r--', linewidth=3, marker='s', markersize=6,
              alpha=0.8, label='Score-Life')
-    ax1.set_xlabel('Wealth ($)', fontsize=13, fontweight='bold')
-    ax1.set_ylabel('Lifetime Utility', fontsize=13, fontweight='bold')
-    ax1.set_title(f'Consumption-Savings: VI vs Score-Life (γ={gamma}, N={N})',
+    ax1.set_xlabel('Asset Age (mileage)', fontsize=13, fontweight='bold')
+    ax1.set_ylabel('Value V(mileage)', fontsize=13, fontweight='bold')
+    ax1.set_title(f'Capital Asset Replacement: VI vs Score-Life (γ={gamma}, N={N})',
                   fontsize=14, fontweight='bold')
     ax1.legend(fontsize=12)
     ax1.grid(True, alpha=0.3)
@@ -181,7 +176,7 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
     ax2.plot(states, diff, 'purple', linewidth=3, marker='d', markersize=5)
     ax2.axhline(0, color='black', linestyle='--', alpha=0.5)
     ax2.fill_between(states, 0, diff, alpha=0.3, color='purple')
-    ax2.set_xlabel('Wealth ($)', fontsize=12, fontweight='bold')
+    ax2.set_xlabel('Asset Age (mileage)', fontsize=12, fontweight='bold')
     ax2.set_ylabel('V_SL - V_VI', fontsize=12, fontweight='bold')
     ax2.set_title('Difference', fontsize=13, fontweight='bold')
     ax2.grid(True, alpha=0.3)
@@ -205,50 +200,54 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
     # Plot 4: Optimal l parameter
     ax4 = axes[1, 1]
     ax4.plot(states, optimal_l, 'green', linewidth=3, marker='o', markersize=6)
-    ax4.set_xlabel('Wealth ($)', fontsize=12, fontweight='bold')
+    ax4.set_xlabel('Asset Age (mileage)', fontsize=12, fontweight='bold')
     ax4.set_ylabel('Optimal l*', fontsize=12, fontweight='bold')
     ax4.set_title('Score-Life l* Parameter', fontsize=13, fontweight='bold')
     ax4.grid(True, alpha=0.3)
 
-    plt.suptitle('Consumption-Savings Problem: VI vs Score-Life',
+    plt.suptitle('Capital Asset Replacement: VI vs Score-Life',
                  fontsize=16, fontweight='bold', y=0.995)
     plt.tight_layout()
 
-    filename = 'results/economics_consumption_savings_comparison.png'
+    filename = 'results/economics_asset_replacement_comparison.png'
     plt.savefig(filename, dpi=150, bbox_inches='tight')
     print(f"\nSaved: {filename}")
 
 
 def main():
-    gamma = 0.95  # Higher for long-term planning
+    gamma = 0.9
     N = 50
     num_samples = 1000
     n_states = 30
     n_l_points = 30
-    max_wealth = 1000
+    max_mileage = 10000
     transition_samples = 1000
 
     print("=" * 80)
-    print("CONSUMPTION-SAVINGS PROBLEM")
+    print("CAPITAL ASSET REPLACEMENT (Economics Perspective)")
     print("=" * 80)
-    print("\nOptimal consumption vs savings with stochastic returns")
-    print("- State: Wealth level")
-    print("- Action: Consumption rate")
-    print("- Dynamics: Stochastic investment returns")
-    print("- Objective: Maximize lifetime utility")
+    print("\nEconomics problem: When should a firm replace its capital asset?")
+    print("- State: Asset age/condition (bus engine mileage)")
+    print("- Action: Continue using vs Replace")
+    print("- Costs: Maintenance (increasing) vs Replacement (fixed)")
+    print("- Objective: Minimize expected discounted costs")
+    print("\nApplications:")
+    print("- Industrial organization (capital investment)")
+    print("- Operations research (equipment replacement)")
+    print("- Public economics (infrastructure management)")
     print()
 
     # Pre-compute transitions
-    transitions = precompute_transitions(n_states, max_wealth, transition_samples)
+    transitions = precompute_transitions(n_states, max_mileage, transition_samples)
 
     # Value Iteration
-    states_vi, V_vi = value_iteration_consumption(
-        gamma, n_states, max_wealth, transitions
+    states_vi, V_vi = value_iteration_bus_engine(
+        gamma, n_states, max_mileage, transitions
     )
 
     # Score-Life
-    states_sl, V_sl, optimal_l = score_life_consumption(
-        gamma, N, num_samples, n_states, n_l_points, max_wealth
+    states_sl, V_sl, optimal_l = score_life_bus_engine(
+        gamma, N, num_samples, n_states, n_l_points, max_mileage
     )
 
     # Compare
@@ -257,19 +256,27 @@ def main():
     # Statistics
     corr = np.corrcoef(V_vi, V_sl)[0, 1]
     rmse = np.sqrt(np.mean((V_sl - V_vi)**2))
+    mean_diff = np.mean(V_sl - V_vi)
 
     print("\n" + "=" * 80)
-    print("RESULTS")
+    print("VERIFICATION: DO VI AND SCORE-LIFE MATCH?")
     print("=" * 80)
     print(f"\nCorrelation:  r = {corr:.6f}")
     print(f"RMSE:         {rmse:.4f}")
+    print(f"Mean diff:    {mean_diff:.4f}")
 
     if corr > 0.99:
-        print("\n✅ Excellent agreement between VI and Score-Life!")
+        print("\n✅ EXCELLENT! Nearly perfect agreement (r > 0.99)")
+        print("   Value functions match - ready to scale to other environments")
     elif corr > 0.95:
-        print("\n✅ Good agreement between methods")
-
-    print("\nThis demonstrates Score-Life works on economics problems!")
+        print("\n✅ GOOD agreement (r > 0.95)")
+        print("   Methods produce similar value functions")
+    elif corr > 0.90:
+        print("\n⚠️  Moderate agreement (r > 0.90)")
+        print("   Some discrepancy - may need parameter tuning")
+    else:
+        print(f"\n❌ LOW agreement (r = {corr:.4f})")
+        print("   Need to debug - check parameters and convergence")
 
 
 if __name__ == "__main__":

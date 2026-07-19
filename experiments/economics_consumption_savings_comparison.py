@@ -216,12 +216,12 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
 
 def main():
     gamma = 0.9
-    N = 50  # Keep original - longer doesn't help
-    num_samples = 5000  # High but not extreme
+    N = 75  # Moderate increase for better horizon
+    num_samples = 8000  # Push higher carefully
     n_states = 30
-    n_l_points = 100  # Fine but not overfitting
+    n_l_points = 150  # Finer optimization, below overfitting threshold
     max_mileage = 10000
-    transition_samples = 1000  # Keep VI consistent with previous runs
+    transition_samples = 1000  # Keep VI consistent
 
     print("=" * 80)
     print("CAPITAL ASSET REPLACEMENT (Economics Perspective)")

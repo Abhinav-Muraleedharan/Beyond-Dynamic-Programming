@@ -264,9 +264,9 @@ def main():
         gamma, n_states, max_mileage, transitions
     )
 
-    # Score-Life with optimizer
+    # Score-Life with grid search (optimizer fails due to local optima!)
     states_sl, V_sl, optimal_l = score_life_bus_engine(
-        gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=True
+        gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=False
     )
 
     # Compare

@@ -221,7 +221,7 @@ def main():
     n_states = 30
     n_l_points = 100  # Sweet spot - r=0.992
     max_mileage = 10000
-    transition_samples = 1000  # Optimal for VI consistency
+    transition_samples = 5000  # Match Score-Life sample count!
 
     print("=" * 80)
     print("CAPITAL ASSET REPLACEMENT (Economics Perspective)")

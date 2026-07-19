@@ -109,10 +109,29 @@ def value_iteration_bus_engine(gamma, n_states, max_mileage, transitions, tolera
 
         V = V_new.copy()
 
+    # Extract policy
+    policy = np.zeros(n_states)
+    for i, mileage in enumerate(states):
+        next_states = transitions[i]['next_states']
+        rewards = transitions[i]['rewards']
+
+        V_next_samples = []
+        for ns in next_states:
+            next_idx = np.argmin(np.abs(states - ns))
+            V_next_samples.append(V[next_idx])
+
+        E_reward = np.mean(rewards)
+        E_V_next = np.mean(V_next_samples)
+
+        Q_keep = E_reward + gamma * E_V_next
+        Q_replace = -100 + gamma * V[0]
+
+        policy[i] = 1 if Q_replace > Q_keep else 0  # 1=Replace, 0=Keep
+
     print(f"\n  V(mileage=0) = {V[0]:.6f}")
     print(f"  V(mileage={max_mileage}) = {V[-1]:.6f}")
 
-    return states, V
+    return states, V, policy
 
 
 def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=False):
@@ -129,6 +148,7 @@ def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_milea
     states = np.linspace(0, max_mileage, n_states)
     V_sl = np.zeros(n_states)
     optimal_l = np.zeros(n_states)
+    policy_sl = np.zeros(n_states)
 
     for i, mileage in enumerate(states):
         if i % 5 == 0:
@@ -165,10 +185,85 @@ def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_milea
             V_sl[i] = scores[max_idx]
             optimal_l[i] = l_values[max_idx]
 
+        # Extract policy by comparing actions
+        # Compute Score for keep (action 0) vs replace (action 1)
+        env.set_state(mileage)
+        slp_keep = ScoreLifeProgramming(
+            env, gamma=gamma, N=N, j_max=5,
+            num_samples=num_samples,
+            reference_state=np.array([mileage])
+        )
+
+        # For keep action
+        env.set_state(mileage)
+        scores_keep = []
+        for l in [optimal_l[i]]:  # Use optimal l for this state
+            score_keep = slp_keep.S(l, np.array([mileage]))
+            scores_keep.append(score_keep)
+
+        # For replace action: simulate one-step replace, then continue optimally
+        # This is approximated by the replacement cost plus value at state 0
+        score_replace = -100 + gamma * V_sl[0] if i > 0 else -100
+
+        policy_sl[i] = 1 if score_replace > scores_keep[0] else 0
+
     print(f"\n  V(mileage=0) = {V_sl[0]:.6f}")
     print(f"  V(mileage={max_mileage}) = {V_sl[-1]:.6f}")
 
-    return states, V_sl, optimal_l
+    return states, V_sl, optimal_l, policy_sl
+
+
+def plot_policy_comparison(states, policy_vi, policy_sl, gamma):
+    """Create policy comparison visualization."""
+
+    fig, axes = plt.subplots(2, 1, figsize=(14, 10))
+
+    # Plot 1: Policies side by side
+    ax1 = axes[0]
+    ax1.plot(states, policy_vi, 'b-', linewidth=3, marker='o', markersize=8,
+             alpha=0.8, label='Value Iteration Policy')
+    ax1.plot(states, policy_sl, 'r--', linewidth=3, marker='s', markersize=8,
+             alpha=0.8, label='Score-Life Policy')
+    ax1.set_xlabel('Asset Age (mileage)', fontsize=13, fontweight='bold')
+    ax1.set_ylabel('Action (0=Keep, 1=Replace)', fontsize=13, fontweight='bold')
+    ax1.set_title(f'Replacement Policies: VI vs Score-Life (γ={gamma})',
+                  fontsize=14, fontweight='bold')
+    ax1.set_ylim(-0.1, 1.1)
+    ax1.set_yticks([0, 1])
+    ax1.set_yticklabels(['Keep', 'Replace'])
+    ax1.legend(fontsize=12)
+    ax1.grid(True, alpha=0.3)
+
+    # Plot 2: Policy agreement
+    ax2 = axes[1]
+    agreement = (policy_vi == policy_sl).astype(float)
+    colors = ['red' if a == 0 else 'green' for a in agreement]
+    ax2.scatter(states, agreement, c=colors, s=100, alpha=0.6, edgecolors='black')
+    ax2.set_xlabel('Asset Age (mileage)', fontsize=13, fontweight='bold')
+    ax2.set_ylabel('Agreement', fontsize=13, fontweight='bold')
+    ax2.set_ylim(-0.1, 1.1)
+    ax2.set_yticks([0, 1])
+    ax2.set_yticklabels(['Disagree', 'Agree'])
+
+    agreement_pct = np.mean(agreement) * 100
+    ax2.set_title(f'Policy Agreement: {agreement_pct:.1f}%',
+                  fontsize=14, fontweight='bold')
+    ax2.grid(True, alpha=0.3)
+
+    # Add statistics
+    ax2.text(0.02, 0.98, f'States where policies agree: {int(np.sum(agreement))}/{len(states)}',
+             transform=ax2.transAxes, fontsize=12, verticalalignment='top',
+             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+    plt.suptitle('Capital Asset Replacement: Policy Comparison',
+                 fontsize=16, fontweight='bold', y=0.995)
+    plt.tight_layout()
+
+    filename = 'results/economics_policy_comparison.png'
+    plt.savefig(filename, dpi=150, bbox_inches='tight')
+    print(f"\nSaved: {filename}")
+
+    return agreement_pct
 
 
 def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
@@ -260,17 +355,20 @@ def main():
     transitions = precompute_transitions(n_states, max_mileage, transition_samples)
 
     # Value Iteration
-    states_vi, V_vi = value_iteration_bus_engine(
+    states_vi, V_vi, policy_vi = value_iteration_bus_engine(
         gamma, n_states, max_mileage, transitions
     )
 
     # Score-Life with grid search (optimizer fails due to local optima!)
-    states_sl, V_sl, optimal_l = score_life_bus_engine(
+    states_sl, V_sl, optimal_l, policy_sl = score_life_bus_engine(
         gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=False
     )
 
-    # Compare
+    # Compare value functions
     plot_comparison(states_vi, V_vi, V_sl, optimal_l, gamma, N)
+
+    # Compare policies
+    agreement_pct = plot_policy_comparison(states_vi, policy_vi, policy_sl, gamma)
 
     # Statistics
     corr = np.corrcoef(V_vi, V_sl)[0, 1]
@@ -294,16 +392,24 @@ def main():
     print("\n" + "=" * 80)
     print("VERIFICATION: DO VI AND SCORE-LIFE MATCH?")
     print("=" * 80)
-    print(f"\nCorrelation:  r = {corr:.6f}")
-    print(f"RMSE:         {rmse:.4f}")
-    print(f"Mean diff:    {mean_diff:.4f}")
-    print(f"Std of diff:  {np.std(diff):.4f}")
-    print(f"Min diff:     {np.min(diff):.4f}")
-    print(f"Max diff:     {np.max(diff):.4f}")
+    print(f"\nValue Function Agreement:")
+    print(f"  Correlation:  r = {corr:.6f}")
+    print(f"  RMSE:         {rmse:.4f}")
+    print(f"  Mean diff:    {mean_diff:.4f}")
+    print(f"  Std of diff:  {np.std(diff):.4f}")
+    print(f"  Min diff:     {np.min(diff):.4f}")
+    print(f"  Max diff:     {np.max(diff):.4f}")
 
-    if corr > 0.99:
-        print("\n✅ EXCELLENT! Nearly perfect agreement (r > 0.99)")
-        print("   Value functions match - ready to scale to other environments")
+    print(f"\nPolicy Agreement:")
+    print(f"  Agreement:    {agreement_pct:.1f}%")
+    print(f"  States agree: {int(agreement_pct * n_states / 100)}/{n_states}")
+
+    if corr > 0.99 and agreement_pct > 95:
+        print("\n✅ EXCELLENT! Nearly perfect agreement (r > 0.99, policy > 95%)")
+        print("   Both value functions and policies match - ready to scale")
+    elif corr > 0.99:
+        print("\n✅ EXCELLENT value function agreement (r > 0.99)")
+        print(f"   But policy agreement is {agreement_pct:.1f}% - may need investigation")
     elif corr > 0.95:
         print("\n✅ GOOD agreement (r > 0.95)")
         print("   Methods produce similar value functions")

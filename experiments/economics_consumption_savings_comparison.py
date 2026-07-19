@@ -234,7 +234,7 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
 
 
 def main():
-    gamma = 0.9
+    gamma = 0.5  # TEST: Lower gamma to reduce horizon mismatch
     N = 50  # Optimal - confirmed through systematic testing
     num_samples = 5000  # Sweet spot - best offset=-15.7
     n_states = 30

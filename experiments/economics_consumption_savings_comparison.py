@@ -216,12 +216,12 @@ def plot_comparison(states, V_vi, V_sl, optimal_l, gamma, N):
 
 def main():
     gamma = 0.9
-    N = 50
-    num_samples = 2000  # Sweet spot found empirically
+    N = 100  # Longer horizon for better convergence
+    num_samples = 10000  # Very high sample count for minimal variance
     n_states = 30
-    n_l_points = 50  # Good balance of accuracy vs speed
+    n_l_points = 200  # Very fine l-grid for precise optimization
     max_mileage = 10000
-    transition_samples = 1000
+    transition_samples = 5000  # More VI transition samples too
 
     print("=" * 80)
     print("CAPITAL ASSET REPLACEMENT (Economics Perspective)")

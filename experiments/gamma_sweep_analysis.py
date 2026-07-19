@@ -199,8 +199,8 @@ def plot_gamma_sweep_results(results, states):
     n_gammas = len(gammas)
 
     # Create large figure with multiple subplots
-    fig = plt.figure(figsize=(20, 16))
-    gs = fig.add_gridspec(4, 3, hspace=0.3, wspace=0.3)
+    fig = plt.figure(figsize=(22, 16))
+    gs = fig.add_gridspec(4, 4, hspace=0.3, wspace=0.3)
 
     # Row 1: Value functions for each gamma
     for i, result in enumerate(results):
@@ -230,8 +230,8 @@ def plot_gamma_sweep_results(results, states):
         ax.legend(fontsize=9)
         ax.grid(True, alpha=0.3)
 
-    # Row 3: Agreement metrics vs gamma
-    ax1 = fig.add_subplot(gs[2, 0])
+    # Row 3: Agreement metrics vs gamma (span multiple columns)
+    ax1 = fig.add_subplot(gs[2, 0:2])  # Span 2 columns
     ax1.plot(gammas, [r['corr'] for r in results], 'o-', linewidth=3, markersize=10,
             color='blue', label='Value Correlation')
     ax1.axhline(0.99, color='green', linestyle='--', alpha=0.5, label='Excellent (0.99)')
@@ -241,7 +241,7 @@ def plot_gamma_sweep_results(results, states):
     ax1.legend(fontsize=10)
     ax1.grid(True, alpha=0.3)
 
-    ax2 = fig.add_subplot(gs[2, 1])
+    ax2 = fig.add_subplot(gs[2, 2:4])  # Span 2 columns
     ax2.plot(gammas, [abs(r['mean_diff']) for r in results], 'o-', linewidth=3,
             markersize=10, color='purple', label='|Mean Offset|')
     ax2.axhline(5, color='green', linestyle='--', alpha=0.5, label='Target (±5)')
@@ -251,7 +251,7 @@ def plot_gamma_sweep_results(results, states):
     ax2.legend(fontsize=10)
     ax2.grid(True, alpha=0.3)
 
-    ax3 = fig.add_subplot(gs[2, 2])
+    ax3 = fig.add_subplot(gs[3, 0:2])  # Row 4, span 2 columns
     ax3.plot(gammas, [r['policy_agreement'] for r in results], 'o-', linewidth=3,
             markersize=10, color='green', label='Policy Agreement')
     ax3.axhline(95, color='green', linestyle='--', alpha=0.5, label='Target (95%)')
@@ -262,40 +262,21 @@ def plot_gamma_sweep_results(results, states):
     ax3.legend(fontsize=10)
     ax3.grid(True, alpha=0.3)
 
-    # Row 4: Computational advantage
-    ax4 = fig.add_subplot(gs[3, 0])
-    ax4.bar(['VI', 'SL (parallel)'],
-           [np.mean([r['time_vi'] for r in results]),
-            np.mean([r['time_sl'] for r in results])],
-           color=['blue', 'red'], alpha=0.7)
+    # Row 4: Computational time
+    ax4 = fig.add_subplot(gs[3, 2:4])  # Span 2 columns
+    x = np.arange(len(gammas))
+    width = 0.35
+    ax4.bar(x - width/2, [r['time_vi'] for r in results], width,
+           label='VI', color='blue', alpha=0.7)
+    ax4.bar(x + width/2, [r['time_sl'] for r in results], width,
+           label='SL (4 cores)', color='red', alpha=0.7)
+    ax4.set_xlabel('Gamma (γ)', fontsize=12, fontweight='bold')
     ax4.set_ylabel('Time (seconds)', fontsize=12, fontweight='bold')
-    ax4.set_title('Average Computation Time', fontsize=13, fontweight='bold')
+    ax4.set_title('Computation Time by Gamma', fontsize=13, fontweight='bold')
+    ax4.set_xticks(x)
+    ax4.set_xticklabels([f'{g}' for g in gammas])
+    ax4.legend(fontsize=10)
     ax4.grid(True, alpha=0.3, axis='y')
-
-    ax5 = fig.add_subplot(gs[3, 1])
-    speedups = [r['time_vi'] / r['time_sl'] for r in results]
-    ax5.plot(gammas, speedups, 'o-', linewidth=3, markersize=10, color='orange')
-    ax5.axhline(1, color='black', linestyle='--', alpha=0.5, label='No speedup')
-    ax5.set_xlabel('Gamma (γ)', fontsize=12, fontweight='bold')
-    ax5.set_ylabel('Speedup (×)', fontsize=12, fontweight='bold')
-    ax5.set_title(f'Score-Life Speedup (avg={np.mean(speedups):.1f}×)',
-                 fontsize=13, fontweight='bold')
-    ax5.legend(fontsize=10)
-    ax5.grid(True, alpha=0.3)
-
-    ax6 = fig.add_subplot(gs[3, 2])
-    n_cores = cpu_count()
-    theoretical_speedup = n_cores
-    actual_speedup = np.mean(speedups)
-    efficiency = (actual_speedup / theoretical_speedup) * 100
-
-    ax6.bar(['Theoretical\n(n_cores)', 'Actual\n(measured)'],
-           [theoretical_speedup, actual_speedup],
-           color=['lightblue', 'orange'], alpha=0.7)
-    ax6.set_ylabel('Speedup (×)', fontsize=12, fontweight='bold')
-    ax6.set_title(f'Parallel Efficiency: {efficiency:.1f}%\n({n_cores} cores)',
-                 fontsize=13, fontweight='bold')
-    ax6.grid(True, alpha=0.3, axis='y')
 
     plt.suptitle('Gamma Sweep Analysis: VI vs Score-Life',
                 fontsize=18, fontweight='bold', y=0.995)

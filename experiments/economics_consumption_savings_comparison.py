@@ -115,11 +115,15 @@ def value_iteration_bus_engine(gamma, n_states, max_mileage, transitions, tolera
     return states, V
 
 
-def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_mileage):
+def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=False):
     """Score-Life for bus engine replacement."""
 
     print("\n" + "=" * 80)
     print("SCORE-LIFE: Capital Asset Replacement")
+    if use_optimizer:
+        print("Using scipy optimizer for precise l* optimization")
+    else:
+        print(f"Using grid search with {n_l_points} points")
     print("=" * 80)
 
     states = np.linspace(0, max_mileage, n_states)
@@ -139,12 +143,27 @@ def score_life_bus_engine(gamma, N, num_samples, n_states, n_l_points, max_milea
             reference_state=np.array([mileage])
         )
 
-        l_values = np.linspace(0.0, 1.0, n_l_points)
-        scores = [slp.S(l, np.array([mileage])) for l in l_values]
+        if use_optimizer:
+            # Use scipy optimizer for precise optimization
+            from scipy.optimize import minimize_scalar
 
-        max_idx = np.argmax(scores)
-        V_sl[i] = scores[max_idx]
-        optimal_l[i] = l_values[max_idx]
+            # Negative because minimize_scalar minimizes
+            def neg_score(l):
+                return -slp.S(l, np.array([mileage]))
+
+            # Use bounded optimization (l must be in [0, 1])
+            result = minimize_scalar(neg_score, bounds=(0, 1), method='bounded')
+
+            V_sl[i] = -result.fun  # Negate back
+            optimal_l[i] = result.x
+        else:
+            # Original grid search
+            l_values = np.linspace(0.0, 1.0, n_l_points)
+            scores = [slp.S(l, np.array([mileage])) for l in l_values]
+
+            max_idx = np.argmax(scores)
+            V_sl[i] = scores[max_idx]
+            optimal_l[i] = l_values[max_idx]
 
     print(f"\n  V(mileage=0) = {V_sl[0]:.6f}")
     print(f"  V(mileage={max_mileage}) = {V_sl[-1]:.6f}")
@@ -245,9 +264,9 @@ def main():
         gamma, n_states, max_mileage, transitions
     )
 
-    # Score-Life
+    # Score-Life with optimizer
     states_sl, V_sl, optimal_l = score_life_bus_engine(
-        gamma, N, num_samples, n_states, n_l_points, max_mileage
+        gamma, N, num_samples, n_states, n_l_points, max_mileage, use_optimizer=True
     )
 
     # Compare
